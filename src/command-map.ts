@@ -19,4 +19,5 @@ export class CommandMap {
     public findCommand(keys: string[]): VoidFunction | undefined {
         return this.map.get(CommandMap.keyEncode(keys));
     }
+    p;
 }

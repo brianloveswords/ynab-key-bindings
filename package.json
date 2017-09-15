@@ -21,10 +21,17 @@
         "typescript": "^2.3.2"
     },
     "jest": {
-        "moduleFileExtensions": ["ts", "tsx", "js"],
+        "moduleFileExtensions": [
+            "ts",
+            "tsx",
+            "js"
+        ],
         "transform": {
             "\\.(ts|tsx)$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
         },
         "testRegex": "/__tests__/.*\\.(ts|tsx|js)$"
+    },
+    "dependencies": {
+        "array-equal": "^1.0.0"
     }
 }
