@@ -1,41 +1,37 @@
 import { Command } from "./command";
-import { CommandMap } from "./command-map";
+import { CommandTree } from "./command-tree";
 import { debug } from "./util";
 
 export class CommandReceiver {
-    private commandMap: CommandMap;
+    private commandTree: CommandTree;
     private keyArray: string[];
     private chainDelay: number;
     private chainTimer: number;
     private chainActive: boolean;
-    private prefixKey: string;
 
-    constructor(
-        commands: Command[],
-        prefixKey: string = "Control",
-        delay: number = 500,
-    ) {
-        this.commandMap = new CommandMap(commands);
+    constructor(commands: Command[], delay: number = 500) {
+        this.commandTree = new CommandTree(commands);
         this.chainTimer = 0;
         this.keyArray = [];
         this.chainActive = false;
         this.keyHandler = this.keyHandler.bind(this);
         this.setDelay(delay);
-        this.setPrefixKey(prefixKey);
     }
 
     public keyPress(key: string) {
-        this.continueChain();
         this.keyArray.push(key);
 
-        const command = this.commandMap.findCommand(this.keyArray);
+        const command = this.commandTree.find(this.keyArray);
 
         if (command) {
-            this.clearChain();
-            return command;
+            if (command.type === "action") {
+                this.reset();
+                return command;
+            }
+            this.continueChain();
         }
 
-        return null;
+        return command;
     }
 
     public setDelay(delay: number) {
@@ -46,46 +42,47 @@ export class CommandReceiver {
         return this.chainDelay;
     }
 
-    public setPrefixKey(prefixKey: string) {
-        this.prefixKey = prefixKey;
-    }
-
-    public getPrefixKey() {
-        return this.prefixKey;
-    }
-
     public isChainActive(): boolean {
         return this.chainActive;
     }
 
     public keyHandler(event: KeyboardEvent) {
-        // keyCode 38
-        // code ArrowUp
-        // which 38
+        const key = event.key;
 
-        if (event.key === this.prefixKey) {
-            debug("caught prefix key");
-            this.clearChain().startChain();
+        const maybeResult = this.keyPress(key);
+
+        if (!maybeResult) {
+            if (this.chainActive) {
+                debug(
+                    "broke the chain, key sequence not found:",
+                    this.keyArray,
+                );
+                this.clearChain();
+                return false;
+            }
+            return true;
+        }
+
+        if (maybeResult.type === "prefix") {
+            debug("caught prefix key sequence:", this.keyArray);
+
+            this.continueChain();
             event.stopPropagation();
             event.preventDefault();
             return false;
         }
 
-        if (!this.isChainActive()) {
-            debug("chain is not active");
-            return true;
-        }
-
-        const action = this.keyPress(event.key);
-        debug("key:", event.key);
-        if (action) {
-            debug("found action:", action);
-            action();
-        }
+        const action = maybeResult.function;
+        debug("found action:", action);
+        action();
 
         event.stopPropagation();
         event.preventDefault();
         return false;
+    }
+
+    public reset() {
+        this.clearChain();
     }
 
     /* private methods */
