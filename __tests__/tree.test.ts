@@ -1,10 +1,9 @@
 import {
     Branch,
     Leaf,
-    ROOT,
     Tree,
     createEmptyTree,
-    find,
+    findNode,
     insert,
     insertLeaf,
     calculatePath,
@@ -74,17 +73,17 @@ describe("find", () => {
     });
 
     it("does not find keys that do not exist", () => {
-        const notFound = find(tree, ["nahhh"]);
+        const notFound = findNode(tree, ["nahhh"]);
         expect(notFound).toBeNull();
     });
 
     it("finds surface keys that exist", () => {
-        const found = find(tree, ["Control"]);
+        const found = findNode(tree, ["Control"]);
         expect(found).toBeDefined();
     });
 
     it("finds deep keys that exist", () => {
-        const found = find(tree, ["Control", "a", "b"]);
+        const found = findNode(tree, ["Control", "a", "b"]);
         expect(found).toBeDefined();
         expect((found as StringLeaf).value).toBe("Control a b");
     });
@@ -112,7 +111,7 @@ describe("insertLeaf", () => {
         expect(leaf.parent).toBe(controlBranch);
     });
 
-    it.only("make new branches if they don't exist", () => {
+    it("make new branches if they don't exist", () => {
         const insertPath = ["Option", "a", "c"];
         const leaf = insertLeaf(tree, insertPath, "Option a c");
         const foundPath = calculatePath(leaf);

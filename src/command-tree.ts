@@ -1,64 +1,58 @@
+import {
+    createEmptyTree,
+    insertLeaf,
+    findNode,
+    Tree,
+    isLeaf,
+    isBranch,
+} from "./tree";
 import { Command } from "./command";
 
-interface Branch {
-    key: string;
-    parent: Node | null;
-    children: Tree;
+type Action = (...args: any[]) => any;
+type Keys = string[];
+type Maybe<T> = T | null;
+
+type FindResult = Maybe<PrefixResult | ActionResult>;
+
+interface PrefixResult {
+    type: "prefix";
 }
 
-interface Leaf {
-    key: string;
-    parent: Node | null;
-    value: Function;
+interface ActionResult {
+    type: "action";
+    function: Action;
 }
-
-type Node = Branch | Leaf;
-type Tree = Node[];
-
-/**
- * Store a list of commands in a tree sorted by prefix. For example
- * the command list:
- *
- *   [
- *        "Control a d",
- *        "Control b e",
- *        "g 1",
- *        "g 2",
- *        "g b r",
- *        "g b v",
- *   ]
- *
- * would result in a tree that looks like this:
- *         <....root....>
- *         /            \
- *     Control           g
- *      /   \          / | \
- *     a     b        1  2  b
- *    /       \            / \
- *   d         e          v   r
- *
- * Leaf nodes will have function values attached to them. It is an
- * error to try to connect a function value to a branch node.
- */
 export class CommandTree {
-    private tree: Tree;
+    private tree: Tree<string, Action>;
     /**
      * @returns CommandTree
      */
     constructor(commandList: Command[] = []) {
-        this.tree = CommandTree.createFromList(commandList);
+        const tree: Tree<string, Action> = createEmptyTree();
+
+        commandList.forEach(command => {
+            insertLeaf(tree, command.keys, command.action);
+        });
+
+        this.tree = tree;
     }
 
-    /**
-     * Create an interface for walking this tree.
-     *
-     * @returns TreeWalker
-     */
-    public createWalker() {
-        return new TreeWalker(this.tree);
-    }
+    public find(keys: Keys): Maybe<FindResult> {
+        const maybeCommand = findNode(this.tree, keys);
 
-    private static createFromList(commandList: Command[]) {
-        return [];
+        if (!maybeCommand) {
+            return null;
+        }
+
+        if (isLeaf(maybeCommand)) {
+            return {
+                type: "action",
+                function: maybeCommand.value,
+            };
+        }
+
+        return {
+            type: "prefix",
+        };
     }
 }

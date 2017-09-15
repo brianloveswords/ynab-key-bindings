@@ -12,7 +12,6 @@ const commandList = [
     new Command("a b d", voidfn),
     new Command("a b f", voidfn),
     new Command("a c", voidfn),
-    new Command("a c f", voidfn),
     new Command("Control c f", voidfn),
     new Command("Control d e", voidfn),
 ];
@@ -24,16 +23,28 @@ describe("CommandTree", () => {
         ct = new CommandTree(commandList);
     });
 
-    describe("#createWalker", () => {
-        it("can receive a valid key representing a branch node and", () => {
+    describe("#find", () => {
+        it("can find a prefix from a key list", () => {
             const tree = new CommandTree(commandList);
-            const walker = tree.createWalker();
+            const result = tree.find(["a", "b"]);
+            expect(result.type).toBe("prefix");
+        });
 
-            const result = walker.next("a").next("b").result();
+        it("can find a command from a key list", () => {
+            const tree = new CommandTree(commandList);
+            const result = tree.find(["a", "b", "f"]);
 
-            expect(result.isNode(result)).toBe(true);
-            expect(result.isBranch(result)).toBe(true);
-            expect(result.isLeaf(result)).toBe(false);
+            if (result.type !== "action") {
+                throw new Error("result was not a command");
+            }
+
+            expect(result.function).toBe(voidfn);
+        });
+
+        it("doesn't find shit that ain't there", () => {
+            const tree = new CommandTree(commandList);
+            const result = tree.find(["a", "b", "f", "g"]);
+            expect(result).toBeNull();
         });
     });
 });

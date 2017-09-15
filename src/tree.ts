@@ -54,7 +54,7 @@ export function insert<K, V>(
         : completeNode as Leaf<K, V>;
 }
 
-export function find<K, V>(
+export function findNode<K, V>(
     tree: Tree<K, V> | Branch<K, V>,
     path: Path<K>,
 ): Maybe<TreeNode<K, V>> {
@@ -98,7 +98,7 @@ export function insertLeaf<K, V>(
 ): Leaf<K, V> {
     const rootPath = path.slice(0, -1);
     const leafKey = path[path.length - 1];
-    const branch = find(tree, rootPath);
+    const branch = findNode(tree, rootPath);
 
     if (branch) {
         if (isLeaf(branch)) {
@@ -111,7 +111,7 @@ export function insertLeaf<K, V>(
     outer: for (let i = 0; rootPath[i]; i++) {
         const searchKey = rootPath[i];
 
-        const foundBranch: Maybe<TreeNode<K, V>> = find(currentBranch, [
+        const foundBranch: Maybe<TreeNode<K, V>> = findNode(currentBranch, [
             searchKey,
         ]);
 
@@ -151,11 +151,11 @@ export function calculatePath<K, V>(node: TreeNode<K, V>): Path<K> {
     return path;
 }
 
-function isLeaf<K, V>(node: TreeNode<K, V>): node is Leaf<K, V> {
+export function isLeaf<K, V>(node: TreeNode<K, V>): node is Leaf<K, V> {
     return "value" in (node as Leaf<K, V>);
 }
 
-function isBranch<K, V>(
+export function isBranch<K, V>(
     node: TreeNode<K, V> | Tree<K, V>,
 ): node is Branch<K, V> {
     return "children" in (node as Branch<K, V>);
