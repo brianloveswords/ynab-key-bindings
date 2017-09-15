@@ -59,9 +59,14 @@ export class CommandReceiver {
     }
 
     public keyHandler(event: KeyboardEvent) {
+        // keyCode 38
+        // code ArrowUp
+        // which 38
+
         if (event.key === this.prefixKey) {
             debug("caught prefix key");
             this.clearChain().startChain();
+            event.stopPropagation();
             event.preventDefault();
             return false;
         }
@@ -78,6 +83,7 @@ export class CommandReceiver {
             action();
         }
 
+        event.stopPropagation();
         event.preventDefault();
         return false;
     }

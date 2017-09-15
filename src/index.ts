@@ -2,7 +2,16 @@ import { Command } from "./command";
 import { CommandReceiver } from "./command-receiver";
 import * as ynab from "./ynab";
 
+(window as any).DEBUG_MODE = true;
+
 const receiver = new CommandReceiver([
+    new Command("c c", () => ynab.collapseAll()),
+    new Command("c e", () => ynab.expandAll()),
+    new Command("c n", () => ynab.nextMonth()),
+    new Command("c p", () => ynab.previousMonth()),
+
+    new Command("e b", () => ynab.emptySelectedBudgets()),
+
     new Command("g 1", () => ynab.goToAccount(1)),
     new Command("g 2", () => ynab.goToAccount(2)),
     new Command("g 3", () => ynab.goToAccount(3)),
@@ -17,18 +26,14 @@ const receiver = new CommandReceiver([
     new Command("g r", () => ynab.goToReports()),
     new Command("g a", () => ynab.goToAllAccounts()),
 
-    new Command("c c", () => ynab.collapseAll()),
-    new Command("c e", () => ynab.expandAll()),
-
-    new Command("e b", () => ynab.emptySelectedBudgets()),
-
-    new Command("n", () => ynab.nextMonth()),
-    new Command("p", () => ynab.previousMonth()),
-    new Command("s", () => ynab.activateSearch()),
-    new Command("i", () => ynab.importTranactions()),
-    new Command("r", () => ynab.reconcileAccount()),
+    new Command("v r", () => ynab.toggleReconciledTransations()),
 
     new Command("/", () => ynab.deselectAll()),
+    new Command("f", () => ynab.contextualFix()),
+    new Command("i", () => ynab.importTranactions()),
+    new Command("o", () => ynab.showOverspent()),
+    new Command("r", () => ynab.reconcileAccount()),
+    new Command("s", () => ynab.activateSearch()),
 ]);
 
-document.body.addEventListener("keyup", receiver.keyHandler);
+document.body.addEventListener("keydown", receiver.keyHandler, true);
