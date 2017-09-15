@@ -6,7 +6,8 @@
         "no-console": false,
         "object-literal-sort-keys": false,
         "arrow-parens": false,
-        "interface-name": false
+        "interface-name": false,
+        "ordered-imports": false
     },
     "rulesDirectory": []
 }
