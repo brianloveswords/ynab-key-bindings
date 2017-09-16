@@ -1,6 +1,30 @@
-import { PageInteractions } from "./page-interactions";
+import { ApplicationBase } from "./application-base";
 
-export class YNAB extends PageInteractions {
+export class YNAB extends ApplicationBase {
+    constructor(public root: HTMLElement) {
+        super(root);
+
+        this.addMode({
+            name: "modal",
+            test: app => app.exists(".modal-popup"),
+        });
+
+        this.addMode({
+            name: "account-view",
+            test: app => app.exists(".accounts-header"),
+        });
+
+        this.addMode({
+            name: "budget-view",
+            test: app => app.exists(".budget-header"),
+        });
+
+        this.addMode({
+            name: "reports-view",
+            test: app => app.exists(".reports-header"),
+        });
+    }
+
     public addTransaction() {
         this.click(".add-transaction");
     }
@@ -92,7 +116,7 @@ export class YNAB extends PageInteractions {
             ) as HTMLElement;
             available.click();
 
-            const modal = new PageInteractions(
+            const modal = new ApplicationBase(
                 this.select(".modal-budget-move-money"),
             );
             const toField = modal.select(

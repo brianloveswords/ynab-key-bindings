@@ -6,6 +6,30 @@ import { YNAB } from "./ynab";
 
 const ynab = new YNAB(document.body);
 
+(window as any).ynabKB = ynab;
+
+// ynab
+//     .addBinding({
+//         keys: "c c",
+//         action: "collapseAll",
+//         modes: ["budget-view"],
+//     })
+//     .addBinding({
+//         keys: "c e",
+//         action: "expandAll",
+//         modes: ["budget-view"],
+//     })
+//     .addBinding({
+//         keys: "m n",
+//         action: "previousMonth",
+//         modes: ["budget-view"],
+//     })
+//     .addBinding({
+//         keys: "m p",
+//         action: "nextMonth",
+//         modes: ["budget-view"],
+//     });
+
 const receiver = new CommandReceiver([
     new Command("c c", () => ynab.collapseAll()),
     new Command("c e", () => ynab.expandAll()),

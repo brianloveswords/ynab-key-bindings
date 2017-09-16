@@ -1,5 +1,9 @@
-export class PageInteractions {
+type Selector = string;
+type ClassName = string;
+
+export class Interactions {
     constructor(public root: HTMLElement) { }
+
     public wait(ms: number) {
         return new Promise(resolve => {
             setTimeout(resolve, ms);
@@ -8,7 +12,7 @@ export class PageInteractions {
 
     public findParentWithClass(
         element: HTMLElement,
-        className: string,
+        className: ClassName,
     ): HTMLElement | null {
         const parent = element.parentElement;
         if (!parent) {
@@ -20,7 +24,7 @@ export class PageInteractions {
         return this.findParentWithClass(parent, className);
     }
 
-    public select(selector: string, element = this.root): HTMLElement {
+    public select(selector: Selector, element = this.root): HTMLElement {
         const found = element.querySelector(selector);
 
         if (!found) {
@@ -32,29 +36,29 @@ export class PageInteractions {
 
         return found as HTMLElement;
     }
-    public selectAll(selector: string, element = this.root): HTMLElement[] {
+    public selectAll(selector: Selector, element = this.root): HTMLElement[] {
         return [...element.querySelectorAll(selector)] as HTMLElement[];
     }
 
-    public exists(selector: string): boolean {
+    public exists(selector: Selector): boolean {
         const found = this.root.querySelectorAll(selector);
         return found.length > 0;
     }
 
-    public click(selector: string) {
+    public click(selector: Selector) {
         const element = this.select(selector);
         element.click();
         return this;
     }
 
-    public mousedown(selector: string) {
+    public mousedown(selector: Selector) {
         this.select(selector).dispatchEvent(
             new MouseEvent("mousedown", { bubbles: true }),
         );
         return this;
     }
 
-    public clickAll(selector: string) {
+    public clickAll(selector: Selector) {
         const elements = this.selectAll(selector);
         if (elements.length > 0) {
             elements.forEach(element => element.click());
@@ -64,13 +68,13 @@ export class PageInteractions {
         return this;
     }
 
-    public focus(selector: string) {
+    public focus(selector: Selector) {
         const input = this.select(selector);
         input.dispatchEvent(new Event("focus"));
         return this;
     }
 
-    public blur(selector: string) {
+    public blur(selector: Selector) {
         const input = this.select(selector);
         input.dispatchEvent(new Event("blur"));
         return this;
