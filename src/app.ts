@@ -2,8 +2,10 @@ import { Interactions } from "./interactions";
 import { BindingTree } from "./binding-tree";
 import { Receiver } from "./receiver";
 
+type Callable = (...args: any[]) => any;
+
 interface FunctionMap {
-    [x: string]: (...args: any[]) => any;
+    [x: string]: Callable;
 }
 
 interface Options<M extends FunctionMap, C extends FunctionMap> {
@@ -67,6 +69,11 @@ export class App<
     public setDefaultModeExceptions<kM extends keyof M>(modeNames: kM[]) {
         this.defaultExceptions = modeNames;
         return this;
+    }
+
+    public activeModes() {
+        const modeNames = Object.keys(this.modes);
+        return modeNames.filter(name => this.modes[name].call(this));
     }
 
     public invokeCommand<kC extends keyof C>(command: Command<kC>) {

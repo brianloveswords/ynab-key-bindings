@@ -1,5 +1,5 @@
 import { BindingTree } from "./binding-tree";
-import { App } from "./app";
+import { AppInstance } from "./app";
 import { debug } from "./util";
 
 export class Receiver {
@@ -10,7 +10,7 @@ export class Receiver {
 
     constructor(
         private bindingTree: BindingTree,
-        private app: App<any, any>,
+        private app: AppInstance,
         delay: number = 5000,
     ) {
         this.bindingTree = bindingTree;
@@ -51,6 +51,8 @@ export class Receiver {
 
     public keyHandler(event: KeyboardEvent) {
         const key = event.key;
+
+        debug("active modes", this.app.activeModes());
 
         if (isElementInput(event.srcElement)) {
             return true;
