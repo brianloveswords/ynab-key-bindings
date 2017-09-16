@@ -49,18 +49,31 @@ export class CommandReceiver {
     public keyHandler(event: KeyboardEvent) {
         const key = event.key;
 
+        if (isElementInput(event.srcElement)) {
+            return true;
+        }
+
+        if (isMetaActive(event)) {
+            return true;
+        }
+
         const maybeResult = this.keyPress(key);
 
         if (!maybeResult) {
+            let result;
             if (this.chainActive) {
                 debug(
                     "broke the chain, key sequence not found:",
                     this.keyArray,
                 );
-                this.clearChain();
-                return false;
+                result = false;
+            } else {
+                debug("nothing found for sequence", this.keyArray);
+                result = true;
             }
-            return true;
+
+            this.clearChain();
+            return result;
         }
 
         if (maybeResult.type === "prefix") {
@@ -75,6 +88,8 @@ export class CommandReceiver {
         const action = maybeResult.function;
         debug("found action:", action);
         action();
+
+        this.clearChain();
 
         event.stopPropagation();
         event.preventDefault();
@@ -111,4 +126,16 @@ export class CommandReceiver {
         window.clearTimeout(this.chainTimer);
         return this;
     }
+}
+
+function isElementInput(element: Element | null) {
+    if (!element) {
+        return false;
+    }
+
+    return element.nodeName === "INPUT" || element.nodeName === "TEXTAREA";
+}
+
+function isMetaActive(event: KeyboardEvent) {
+    return event.metaKey === true;
 }

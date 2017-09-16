@@ -1,5 +1,4 @@
 import { Command } from "../src/command";
-import { CommandMap } from "../src/command-map";
 import { CommandReceiver } from "../src/command-receiver";
 
 const voidfn = () => {
@@ -19,56 +18,55 @@ function mockKeyEvent(key: string): KeyboardEvent {
 }
 
 describe("CommandReceiver", () => {
-    let RECEIVER: CommandReceiver;
+    let receiver: CommandReceiver;
+    let commands;
     beforeEach(() => {
-        RECEIVER = new CommandReceiver(
-            [
-                new Command("Control a b c", voidfn),
-                new Command("Control x y z", voidfn),
-                new Command("Option c a", voidfn),
-                new Command("Option c b", voidfn),
-                new Command("Option c b", voidfn),
-                new Command("Option c d d", voidfn),
-            ],
-            50,
-        );
+        commands = {
+            "Control a b c": new Command("Control a b c", jest.fn()),
+            "Control x y z": new Command("Control x y z", jest.fn()),
+            "Option c a": new Command("Option c a", jest.fn()),
+            "Option c b": new Command("Option c b", jest.fn()),
+            "Option c d d": new Command("Option c d d", jest.fn()),
+        };
+        const commandArray = Object.keys(commands).map(k => commands[k]);
+        receiver = new CommandReceiver(commandArray, 50);
     });
 
     describe("#keyPress", () => {
         it("can find commands from sequence of keypresses", () => {
-            expect(RECEIVER.keyPress("Control").type).toBe("prefix");
-            expect(RECEIVER.keyPress("a").type).toBe("prefix");
-            expect(RECEIVER.keyPress("b").type).toBe("prefix");
-            expect(RECEIVER.keyPress("c").type).toBe("action");
+            expect(receiver.keyPress("Control").type).toBe("prefix");
+            expect(receiver.keyPress("a").type).toBe("prefix");
+            expect(receiver.keyPress("b").type).toBe("prefix");
+            expect(receiver.keyPress("c").type).toBe("action");
         });
 
         it("resets after a hit", () => {
-            expect(RECEIVER.keyPress("Control").type).toBe("prefix");
-            expect(RECEIVER.keyPress("a").type).toBe("prefix");
-            expect(RECEIVER.keyPress("b").type).toBe("prefix");
-            expect(RECEIVER.keyPress("c").type).toBe("action");
+            expect(receiver.keyPress("Control").type).toBe("prefix");
+            expect(receiver.keyPress("a").type).toBe("prefix");
+            expect(receiver.keyPress("b").type).toBe("prefix");
+            expect(receiver.keyPress("c").type).toBe("action");
 
-            expect(RECEIVER.keyPress("Control").type).toBe("prefix");
-            expect(RECEIVER.keyPress("a").type).toBe("prefix");
-            expect(RECEIVER.keyPress("b").type).toBe("prefix");
-            expect(RECEIVER.keyPress("c").type).toBe("action");
+            expect(receiver.keyPress("Control").type).toBe("prefix");
+            expect(receiver.keyPress("a").type).toBe("prefix");
+            expect(receiver.keyPress("b").type).toBe("prefix");
+            expect(receiver.keyPress("c").type).toBe("action");
         });
 
         it("resets after delay", done => {
             const delay = 50;
-            RECEIVER.setDelay(delay);
-            expect(RECEIVER.keyPress("Control").type).toBe("prefix");
-            expect(RECEIVER.keyPress("a").type).toBe("prefix");
-            expect(RECEIVER.keyPress("b").type).toBe("prefix");
-            expect(RECEIVER.isChainActive()).toBe(true);
+            receiver.setDelay(delay);
+            expect(receiver.keyPress("Control").type).toBe("prefix");
+            expect(receiver.keyPress("a").type).toBe("prefix");
+            expect(receiver.keyPress("b").type).toBe("prefix");
+            expect(receiver.isChainActive()).toBe(true);
 
             setTimeout(() => {
-                expect(RECEIVER.isChainActive()).toBe(false);
-                expect(RECEIVER.keyPress("Control").type).toBe("prefix");
-                expect(RECEIVER.keyPress("a").type).toBe("prefix");
-                expect(RECEIVER.isChainActive()).toBe(true);
-                expect(RECEIVER.keyPress("b").type).toBe("prefix");
-                expect(RECEIVER.keyPress("c").type).toBe("action");
+                expect(receiver.isChainActive()).toBe(false);
+                expect(receiver.keyPress("Control").type).toBe("prefix");
+                expect(receiver.keyPress("a").type).toBe("prefix");
+                expect(receiver.isChainActive()).toBe(true);
+                expect(receiver.keyPress("b").type).toBe("prefix");
+                expect(receiver.keyPress("c").type).toBe("action");
                 done();
             }, delay + 10);
         });
@@ -77,7 +75,7 @@ describe("CommandReceiver", () => {
     describe("#keyHandler", () => {
         let keyHandler;
         beforeEach(() => {
-            keyHandler = RECEIVER.keyHandler;
+            keyHandler = receiver.keyHandler;
         });
 
         it("returns true for normal keypresses", () => {
@@ -87,18 +85,33 @@ describe("CommandReceiver", () => {
         it("returns false for any prefix sequence", () => {
             expect(keyHandler(mockKeyEvent("Control"))).toBe(false);
             expect(keyHandler(mockKeyEvent("a"))).toBe(false);
-            expect(RECEIVER.isChainActive()).toBe(true);
+            expect(receiver.isChainActive()).toBe(true);
         });
 
         it("returns false on an error'd sequence", () => {
             expect(keyHandler(mockKeyEvent("Control"))).toBe(false);
+            expect(receiver.isChainActive()).toBe(true);
             expect(keyHandler(mockKeyEvent("b"))).toBe(false);
-            expect(RECEIVER.isChainActive()).toBe(false);
+            expect(receiver.isChainActive()).toBe(false);
             expect(keyHandler(mockKeyEvent("b"))).toBe(true);
         });
 
+        it("can pick start a new chain after miss", () => {
+            keyHandler(mockKeyEvent("Control"));
+            keyHandler(mockKeyEvent("b"));
+            expect(receiver.isChainActive()).toBe(false);
+
+            keyHandler(mockKeyEvent("Control"));
+            keyHandler(mockKeyEvent("a"));
+            keyHandler(mockKeyEvent("b"));
+            keyHandler(mockKeyEvent("c"));
+
+            expect(commands["Control a b c"].action).toHaveBeenCalled();
+            expect(receiver.isChainActive()).toBe(false);
+        });
+
         it("returns false while chaining", done => {
-            const delay = RECEIVER.getDelay();
+            const delay = receiver.getDelay();
             expect(keyHandler(mockKeyEvent("Control"))).toBe(false);
             expect(keyHandler(mockKeyEvent("a"))).toBe(false);
             expect(keyHandler(mockKeyEvent("b"))).toBe(false);

@@ -1,11 +1,4 @@
-import {
-    createEmptyTree,
-    insertLeaf,
-    findNode,
-    Tree,
-    isLeaf,
-    isBranch,
-} from "./tree";
+import { createEmptyTree, insertLeaf, findNode, Tree, isLeaf } from "./tree";
 import { Command } from "./command";
 
 type Action = (...args: any[]) => any;
@@ -22,11 +15,10 @@ interface ActionResult {
     type: "action";
     function: Action;
 }
+
 export class CommandTree {
     private tree: Tree<string, Action>;
-    /**
-     * @returns CommandTree
-     */
+
     constructor(commandList: Command[] = []) {
         const tree: Tree<string, Action> = createEmptyTree();
 
