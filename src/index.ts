@@ -2,6 +2,7 @@ import { ynab } from "./ynab";
 (window as any).DEBUG_MODE = true;
 (window as any).ynabKB = ynab;
 
+ynab.setDefaultModeExceptions(["input-mode"]);
 ynab.addBinding({
     keys: "Control s",
     modes: ["account-view"],

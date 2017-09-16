@@ -6,11 +6,11 @@ interface Options<M, C> {
     commands: C;
 }
 
-interface KeyBinding<M, C> {
+interface KeyBinding<kM, kC> {
     keys: string;
-    modes: Array<keyof M>;
-    command: Array<keyof C>;
-    except?: Array<keyof M>;
+    modes: kM[];
+    except?: kM[];
+    command: kC;
 }
 
 export class App<M, C> extends Interactions {
@@ -37,13 +37,16 @@ export class App<M, C> extends Interactions {
         this.commands = commands;
     }
 
-    public addBinding(binding: KeyBinding<M, C>) {
-        binding.modes.push(...this.defaultExceptions);
+    public addBinding<kM extends keyof M, kC extends keyof C>(
+        binding: KeyBinding<kM, kC>,
+    ) {
+        const exceptions = this.defaultExceptions as kM[];
+        binding.modes.push(...exceptions);
         console.log(binding);
         return;
     }
 
-    public setDefaultModeExceptions(modeNames: Array<keyof M>) {
+    public setDefaultModeExceptions<kM extends keyof M>(modeNames: kM[]) {
         this.defaultExceptions = modeNames;
     }
 }
