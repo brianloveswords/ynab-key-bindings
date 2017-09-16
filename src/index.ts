@@ -1,8 +1,10 @@
 import { Command } from "./command";
 import { CommandReceiver } from "./command-receiver";
-import * as ynab from "./ynab";
+import { YNAB } from "./ynab";
 
 (window as any).DEBUG_MODE = true;
+
+const ynab = new YNAB(document.body);
 
 const receiver = new CommandReceiver([
     new Command("c c", () => ynab.collapseAll()),
