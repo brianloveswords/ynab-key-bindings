@@ -2,7 +2,7 @@ type Selector = string;
 type ClassName = string;
 
 export class Interactions {
-    constructor(public root: HTMLElement) { }
+    constructor(private root: HTMLElement) { }
 
     public wait(ms: number) {
         return new Promise(resolve => {

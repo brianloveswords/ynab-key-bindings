@@ -1,6 +1,6 @@
-import { App } from "./app";
+import { App, AppInstance } from "./app";
 
-export const ynab = new App({
+export const ynab: AppInstance = new App({
     root: document.body,
     modes: {
         "modal-open": () => ynab.exists(".modal-popup"),

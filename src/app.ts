@@ -1,19 +1,32 @@
 import { Interactions } from "./interactions";
+import { BindingTree } from "./binding-tree";
+import { Receiver } from "./receiver";
 
-interface Options<M, C> {
+interface FunctionMap {
+    [x: string]: (...args: any[]) => any;
+}
+
+interface Options<M extends FunctionMap, C extends FunctionMap> {
     root: HTMLElement;
     modes: M;
     commands: C;
 }
 
-interface KeyBinding<kM, kC> {
+type Command<kC> = kC | { name: kC; args: any[] };
+
+export interface KeyBinding<kM, kC> {
     keys: string;
-    modes: kM[];
+    modes?: kM[];
     except?: kM[];
-    command: kC;
+    command: Command<kC>;
 }
 
-export class App<M, C> extends Interactions {
+export type AppInstance = App<FunctionMap, FunctionMap>;
+
+export class App<
+    M extends FunctionMap,
+    C extends FunctionMap
+    > extends Interactions {
     public static isInputMode(event?: Event) {
         if (!event) {
             return false;
@@ -25,28 +38,44 @@ export class App<M, C> extends Interactions {
         );
     }
 
-    public root: HTMLElement;
-    public modes: M;
-    public commands: C;
-    public defaultExceptions: Array<keyof M>;
+    private modes: M;
+    private commands: C;
+    private defaultExceptions: Array<keyof M>;
+    private bindingTree: BindingTree;
+    private receiver: Receiver;
 
     constructor({ root, modes, commands }: Options<M, C>) {
         super(root);
-        this.root = root;
         this.modes = modes;
         this.commands = commands;
+        this.bindingTree = new BindingTree();
+        this.receiver = new Receiver(this.bindingTree, this);
+        root.addEventListener("keydown", this.receiver.keyHandler, true);
     }
 
     public addBinding<kM extends keyof M, kC extends keyof C>(
         binding: KeyBinding<kM, kC>,
     ) {
         const exceptions = this.defaultExceptions as kM[];
-        binding.modes.push(...exceptions);
-        console.log(binding);
-        return;
+        if (!binding.except) {
+            binding.except = exceptions;
+        }
+        this.bindingTree.add(binding);
+        return this;
     }
 
     public setDefaultModeExceptions<kM extends keyof M>(modeNames: kM[]) {
         this.defaultExceptions = modeNames;
+        return this;
+    }
+
+    public invokeCommand<kC extends keyof C>(command: Command<kC>) {
+        let action;
+        if (typeof command === "string") {
+            action = this.commands[command];
+            return action.call(this);
+        }
+        action = this.commands[command.name];
+        action.apply(this, command.args);
     }
 }

@@ -171,3 +171,5 @@ function setParent<K, V>(
     }
     return node as Leaf<K, V>;
 }
+
+// function filterTree<K, V>(tree: Tree<K, V>, criteria: ()) { }

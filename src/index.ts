@@ -2,39 +2,74 @@ import { ynab } from "./ynab";
 (window as any).DEBUG_MODE = true;
 (window as any).ynabKB = ynab;
 
-ynab.setDefaultModeExceptions(["input-mode"]);
-ynab.addBinding({
-    keys: "Control s",
-    modes: ["account-view"],
-    command: "activateSearch",
-});
-
-// ynab
-//     .addBinding({
-//         keys: "c c",
-//         action: "collapseAll",
-//         modes: ["budget-view"],
-//     })
-//     .addBinding({
-//         keys: "c e",
-//         action: "expandAll",
-//         modes: ["budget-view"],
-//     })
-//     .addBinding({
-//         keys: "m n",
-//         action: "previousMonth",
-//         modes: ["budget-view"],
-//     })
-//     .addBinding({
-//         keys: "m p",
-//         action: "nextMonth",
-//         modes: ["budget-view"],
-//     });
+ynab
+    .setDefaultModeExceptions(["input-mode"])
+    .addBinding({
+        keys: "Control s",
+        modes: ["account-view"],
+        command: "activateSearch",
+    })
+    .addBinding({
+        keys: "c c",
+        command: "collapseAll",
+        modes: ["budget-view"],
+    })
+    .addBinding({
+        keys: "c e",
+        command: "expandAll",
+        modes: ["budget-view"],
+    })
+    .addBinding({
+        keys: "m n",
+        command: "previousMonth",
+        modes: ["budget-view"],
+    })
+    .addBinding({
+        keys: "m p",
+        command: "nextMonth",
+        modes: ["budget-view"],
+    })
+    .addBinding({
+        keys: "g 1",
+        command: { name: "goToAccount", args: [1] },
+    })
+    .addBinding({
+        keys: "g 2",
+        command: { name: "goToAccount", args: [2] },
+    })
+    .addBinding({
+        keys: "g 3",
+        command: { name: "goToAccount", args: [3] },
+    })
+    .addBinding({
+        keys: "g 4",
+        command: { name: "goToAccount", args: [4] },
+    })
+    .addBinding({
+        keys: "g 5",
+        command: { name: "goToAccount", args: [5] },
+    })
+    .addBinding({
+        keys: "g 6",
+        command: { name: "goToAccount", args: [6] },
+    })
+    .addBinding({
+        keys: "g 7",
+        command: { name: "goToAccount", args: [7] },
+    })
+    .addBinding({
+        keys: "g 8",
+        command: { name: "goToAccount", args: [8] },
+    })
+    .addBinding({
+        keys: "g 9",
+        command: { name: "goToAccount", args: [9] },
+    });
 
 // const receiver = new CommandReceiver([
 //     new Command("c c", () => ynab.collapseAll()),
 //     new Command("c e", () => ynab.expandAll()),
-//     new Command("c n", () => ynab.nextMonth()),
+//     new Command("c n", () => ynab.goTo()),
 //     new Command("c p", () => ynab.previousMonth()),
 
 //     new Command("e b", () => ynab.emptySelectedBudgets()),
