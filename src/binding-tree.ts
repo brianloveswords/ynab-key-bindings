@@ -1,4 +1,10 @@
-import { createEmptyTree, insertLeaf, findNode, Tree, isLeaf } from "./tree";
+import {
+    createEmptyTree,
+    insertLeaf,
+    findNode,
+    InternalTree,
+    isLeaf,
+} from "./tree";
 import { KeyBinding } from "./app";
 
 type Keys = string[];
@@ -17,7 +23,7 @@ interface BindingResult {
 }
 
 export class BindingTree {
-    private tree: Tree<string, Binding>;
+    private tree: InternalTree<string, Binding>;
 
     constructor() {
         this.tree = createEmptyTree();
