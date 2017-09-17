@@ -56,7 +56,11 @@ export class KeyBindings {
         return new KeyBindings(
             this.tree.filter(binding => {
                 const includedModes = binding.modes || [];
-                const excludedModes = binding.except || [];
+
+                // keep only excluded modes that haven't been explicitly
+                // specified in the included mode list
+                const excludedModes = (binding.except || [])
+                    .filter(m => includedModes.indexOf(m) === -1);
 
                 if (!includedModes.length && !excludedModes.length) {
                     return true;
