@@ -109,4 +109,25 @@ describe("Tree", () => {
         expect(newYorkTree.find(["cities", "seattle"])).toBeUndefined();
         expect(newYorkTree.find(["unrelated", "branch"])).toBeUndefined();
     });
+
+    it("iterator: can iterate over nodes", () => {
+        t.insert(["bands", "stove"], "new york");
+        t.insert(["bands", "sunn0)))"], "washingtion");
+        t.insert(["cities", "brooklyn"], "new york");
+        t.insert(["cities", "seattle"], "washington");
+
+        const expected = [
+            ["bands"],
+            ["cities"],
+            ["bands", "stove"],
+            ["bands", "sunn0)))"],
+            ["cities", "brooklyn"],
+            ["cities", "seattle"],
+        ];
+        const found = [];
+        for (const node of t) {
+            found.push(t.getNodePath(node));
+        }
+        expect(found).toMatchObject(expected);
+    });
 });

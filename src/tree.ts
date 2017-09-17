@@ -26,6 +26,19 @@ export class Tree<K, V> {
         this.internalTree = new Map();
     }
 
+    public *[Symbol.iterator](): IterableIterator<TreeNode<K, V>> {
+        const trees: Array<Tree<K, V>> = [this];
+        for (let i = 0; trees[i]; i++) {
+            const tree = trees[i];
+            for (const [_, node] of tree.internalTree) {
+                yield node;
+                if (tree.isBranch(node)) {
+                    trees.push(node.children);
+                }
+            }
+        }
+    }
+
     public insertBranch(key: K): Tree<K, V> {
         const subtree = new Tree<K, V>(this);
         const branch: Branch<K, V> = {
@@ -108,15 +121,12 @@ export class Tree<K, V> {
         })(this, new Tree());
     }
 
-    public forEach<A>(fn: (node: TreeNode<K, V>) => A): void {
-        return (function interator(tree: Tree<K, V>) {
-            for (const [_, node] of tree.internalTree) {
+    public forEach<A>(fn: (node: Leaf<K, V>) => A): void {
+        for (const node of this) {
+            if (this.isLeaf(node)) {
                 fn(node);
-                if (tree.isBranch(node)) {
-                    interator(node.children);
-                }
             }
-        })(this);
+        }
     }
 
     public reduce<A>(
@@ -124,9 +134,7 @@ export class Tree<K, V> {
         accum: A,
     ) {
         this.forEach(node => {
-            if (this.isLeaf(node)) {
-                accum = fn(accum, node.value, node);
-            }
+            accum = fn(accum, node.value, node);
         });
         return accum;
     }
