@@ -102,6 +102,18 @@ export class Tree<K, V> {
         })(this, new Tree());
     }
 
+    public reduce<A>(fn: (accum: A, node: TreeNode<K, V>) => A, accum: A): A {
+        return (function reducer(tree: Tree<K, V>) {
+            for (const [_, node] of tree.internalTree) {
+                accum = fn(accum, node);
+                if (tree.isBranch(node)) {
+                    accum = reducer(node.subtree);
+                }
+            }
+            return accum;
+        })(this);
+    }
+
     public isBranch(node: Maybe<TreeNode<K, V>>): node is Branch<K, V> {
         return !!(node && node.type === "branch");
     }

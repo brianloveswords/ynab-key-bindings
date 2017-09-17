@@ -45,19 +45,36 @@ describe("Tree", () => {
         expect(expected).toBe(found);
     });
 
-    it("#map: turn one tree into another tree", () => {
-        const t = new Tree<string, string>();
-        t.insert(["a", "b", "c1"], "1");
-        t.insert(["a", "b", "c2"], "2");
-        t.insert(["x", "y", "z1"], "3");
-        t.insert(["x", "y", "z2"], "4");
-        t.insertBranch("dead").insertBranch("branch");
+    describe("map / reduce / filter", () => {
+        let t: Tree<string, string>;
 
-        const doubleTree = t.map(value => value + "!");
-        expect((doubleTree.find(["a", "b", "c1"]) as any).value).toBe("1!");
-        expect((doubleTree.find(["a", "b", "c2"]) as any).value).toBe("2!");
-        expect((doubleTree.find(["x", "y", "z1"]) as any).value).toBe("3!");
-        expect((doubleTree.find(["x", "y", "z2"]) as any).value).toBe("4!");
-        expect(doubleTree.find(["dead", "branch"])).toBeDefined();
+        beforeEach(() => {
+            t = new Tree();
+            t.insert(["a", "b", "c1"], "1");
+            t.insert(["a", "b", "c2"], "2");
+            t.insert(["x", "y", "z1"], "3");
+            t.insert(["x", "y", "z2"], "4");
+            t.insertBranch("dead").insertBranch("branch");
+        });
+
+        it("#map: turn one tree into another tree", () => {
+            const doubleTree = t.map(value => value + "!");
+            expect((doubleTree.find(["a", "b", "c1"]) as any).value).toBe("1!");
+            expect((doubleTree.find(["a", "b", "c2"]) as any).value).toBe("2!");
+            expect((doubleTree.find(["x", "y", "z1"]) as any).value).toBe("3!");
+            expect((doubleTree.find(["x", "y", "z2"]) as any).value).toBe("4!");
+            expect(doubleTree.find(["dead", "branch"])).toBeDefined();
+        });
+
+        it("#reduce: can reduce the tree to a single value", () => {
+            const sum = t.reduce((accum, node) => {
+                if (t.isLeaf(node)) {
+                    return accum + parseInt(node.value, 10);
+                }
+                return accum;
+            }, 0);
+
+            expect(sum).toBe(10);
+        });
     });
 });
