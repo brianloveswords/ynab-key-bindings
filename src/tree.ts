@@ -102,10 +102,13 @@ export class Tree<K, V> {
         })(this, new Tree());
     }
 
-    public reduce<A>(fn: (accum: A, node: TreeNode<K, V>) => A, accum: A): A {
+    public reduce<A>(
+        fn: (accum: A, node: TreeNode<K, V>, key: K) => A,
+        accum: A,
+    ): A {
         return (function reducer(tree: Tree<K, V>) {
-            for (const [_, node] of tree.internalTree) {
-                accum = fn(accum, node);
+            for (const [key, node] of tree.internalTree) {
+                accum = fn(accum, node, key);
                 if (tree.isBranch(node)) {
                     accum = reducer(node.subtree);
                 }
@@ -120,5 +123,16 @@ export class Tree<K, V> {
 
     public isLeaf(node: Maybe<TreeNode<K, V>>): node is Leaf<K, V> {
         return !!(node && node.type === "leaf");
+    }
+
+    public empty() {
+        this.internalTree = new Map();
+        return this;
+    }
+
+    public any(predicate: (node: TreeNode<K, V>, key: K) => boolean) {
+        return this.reduce((result, node, key) => {
+            return result || predicate(node, key);
+        }, false);
     }
 }
