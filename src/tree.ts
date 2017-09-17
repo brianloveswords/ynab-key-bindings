@@ -1,12 +1,12 @@
 type Maybe<T> = T | undefined;
 
-export interface Branch<K, V> {
+interface Branch<K, V> {
     type: "branch";
     parent: Maybe<Tree<K, V>>;
     subtree: Tree<K, V>;
 }
 
-export interface Leaf<K, V> {
+interface Leaf<K, V> {
     type: "leaf";
     parent: Maybe<Tree<K, V>>;
     value: V;
@@ -16,7 +16,7 @@ type TreeNode<K, V> = Leaf<K, V> | Branch<K, V>;
 
 type Path<K> = K[];
 
-export type InternalTree<K, V> = Map<K, TreeNode<K, V>>;
+type InternalTree<K, V> = Map<K, TreeNode<K, V>>;
 
 export class Tree<K, V> {
     private internalTree: InternalTree<K, V>;
@@ -83,9 +83,29 @@ export class Tree<K, V> {
         return node.subtree.deepInsertLeaf(remaining, value);
     }
 
+    public insert(path: Path<K>, value: V): Leaf<K, V> {
+        return this.deepInsertLeaf(path, value);
+    }
+
+    public map(fn: (value: V) => V): Tree<K, V> {
+        return (function mapper(oldTree: Tree<K, V>, newTree: Tree<K, V>) {
+            for (const [key, node] of oldTree.internalTree) {
+                if (oldTree.isLeaf(node)) {
+                    newTree.insertLeaf(key, fn(node.value));
+                } else if (oldTree.isBranch(node)) {
+                    const oldBranch = node;
+                    const newBranchTree = newTree.insertBranch(key);
+                    mapper(oldBranch.subtree, newBranchTree);
+                }
+            }
+            return newTree;
+        })(this, new Tree());
+    }
+
     public isBranch(node: Maybe<TreeNode<K, V>>): node is Branch<K, V> {
         return !!(node && node.type === "branch");
     }
+
     public isLeaf(node: Maybe<TreeNode<K, V>>): node is Leaf<K, V> {
         return !!(node && node.type === "leaf");
     }

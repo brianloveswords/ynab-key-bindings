@@ -44,88 +44,20 @@ describe("Tree", () => {
         const found = t.find(["a", "b", "c"]);
         expect(expected).toBe(found);
     });
+
+    it("#map: turn one tree into another tree", () => {
+        const t = new Tree<string, string>();
+        t.insert(["a", "b", "c1"], "1");
+        t.insert(["a", "b", "c2"], "2");
+        t.insert(["x", "y", "z1"], "3");
+        t.insert(["x", "y", "z2"], "4");
+        t.insertBranch("dead").insertBranch("branch");
+
+        const doubleTree = t.map(value => value + "!");
+        expect((doubleTree.find(["a", "b", "c1"]) as any).value).toBe("1!");
+        expect((doubleTree.find(["a", "b", "c2"]) as any).value).toBe("2!");
+        expect((doubleTree.find(["x", "y", "z1"]) as any).value).toBe("3!");
+        expect((doubleTree.find(["x", "y", "z2"]) as any).value).toBe("4!");
+        expect(doubleTree.find(["dead", "branch"])).toBeDefined();
+    });
 });
-
-// describe("find", () => {
-//     let tree: StringTree;
-//     beforeEach(() => {
-//         tree = createEmptyTree();
-
-//         const controlBranch = insert(tree, {
-//             key: "Control",
-//             children: createEmptyTree(),
-//         }) as StringBranch;
-
-//         const controlABranch = insert(controlBranch, {
-//             key: "a",
-//             children: createEmptyTree(),
-//         }) as StringBranch;
-
-//         const controlABValue = insert(controlABranch, {
-//             key: "b",
-//             value: "Control a b",
-//         });
-
-//         const optionBranch = insert(tree, {
-//             key: "Option",
-//             children: createEmptyTree(),
-//         }) as StringBranch;
-
-//         const optionAValue = insert(optionBranch, {
-//             key: "a",
-//             value: "Option a",
-//         });
-
-//         const optionBValue = insert(optionBranch, {
-//             key: "b",
-//             value: "Option b",
-//         });
-//     });
-
-//     it("does not find keys that do not exist", () => {
-//         const notFound = findNode(tree, ["nahhh"]);
-//         expect(notFound).toBeNull();
-//     });
-
-//     it("finds surface keys that exist", () => {
-//         const found = findNode(tree, ["Control"]);
-//         expect(found).toBeDefined();
-//     });
-
-//     it("finds deep keys that exist", () => {
-//         const found = findNode(tree, ["Control", "a", "b"]);
-//         expect(found).toBeDefined();
-//         expect((found as StringLeaf).value).toBe("Control a b");
-//     });
-// });
-
-// describe("insertLeaf", () => {
-//     let tree: StringTree;
-//     let controlBranch;
-//     beforeEach(() => {
-//         tree = createEmptyTree();
-
-//         controlBranch = insert(tree, {
-//             key: "Control",
-//             children: createEmptyTree(),
-//         }) as StringBranch;
-
-//         insert(controlBranch, {
-//             key: "a",
-//             value: "Control a",
-//         });
-//     });
-
-//     it("inserts into an existing branch", () => {
-//         const leaf = insertLeaf(tree, ["Control", "b"], "Control b");
-//         expect(leaf.parent).toBe(controlBranch);
-//     });
-
-//     it("make new branches if they don't exist", () => {
-//         const insertPath = ["Option", "a", "c"];
-//         const leaf = insertLeaf(tree, insertPath, "Option a c");
-//         const foundPath = calculatePath(leaf);
-//         expect(arrayEqual(foundPath, insertPath)).toBe(true);
-//     });
-// });
-// });
