@@ -1,14 +1,8 @@
-import {
-    createEmptyTree,
-    insertLeaf,
-    findNode,
-    InternalTree,
-    isLeaf,
-} from "./tree";
+import { Tree } from "./tree";
 import { KeyBinding } from "./app";
 
 type Keys = string[];
-type Maybe<T> = T | null;
+type Maybe<T> = T | undefined;
 type Binding = KeyBinding<string, string>;
 
 type FindResult = Maybe<PrefixResult | BindingResult>;
@@ -23,25 +17,25 @@ interface BindingResult {
 }
 
 export class BindingTree {
-    private tree: InternalTree<string, Binding>;
+    private tree: Tree<string, Binding>;
 
     constructor() {
-        this.tree = createEmptyTree();
+        this.tree = new Tree();
     }
 
     public add(binding: KeyBinding<string, string>) {
         const treeInsertKey = binding.keys.split(/\s+/);
-        insertLeaf(this.tree, treeInsertKey, binding);
+        this.tree.insert(treeInsertKey, binding);
     }
 
     public find(keys: Keys): Maybe<FindResult> {
-        const maybeCommand = findNode(this.tree, keys);
+        const maybeCommand = this.tree.find(keys);
 
         if (!maybeCommand) {
-            return null;
+            return undefined;
         }
 
-        if (isLeaf(maybeCommand)) {
+        if (this.tree.isLeaf(maybeCommand)) {
             return {
                 type: "binding",
                 binding: maybeCommand.value,
