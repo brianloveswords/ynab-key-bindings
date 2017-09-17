@@ -64,26 +64,28 @@ export class Tree<K, V> {
     }
 
     public find(path: Path<K>): Maybe<TreeNode<K, V>> {
-        const [key, ...rest] = path;
+        const key = path[path.length - 1];
+        const rest = path.slice(0, -1);
 
         if (!key) {
             return undefined;
         }
-        const node = this.internalTree.get(key);
-        if (!node) {
-            return undefined;
+
+        let tree: Tree<K, V> = this;
+        for (const intermediateKey of rest) {
+            const possibleNode = tree.internalTree.get(intermediateKey);
+            if (!possibleNode || tree.isLeaf(possibleNode)) {
+                return undefined;
+            }
+            tree = possibleNode.children;
         }
-        if (rest.length === 0) {
-            return node || undefined;
-        }
-        if (this.isLeaf(node)) {
-            return undefined;
-        }
-        return node.children.find(rest);
+
+        return tree.internalTree.get(key);
     }
 
     public deepInsertLeaf(path: Path<K>, value: V): Leaf<K, V> {
-        const [key, ...rest] = path;
+        const key = path[path.length - 1];
+        const rest = path.slice(0, -1);
 
         if (!key) {
             throw new Error("no key to insert leaf at");
@@ -92,14 +94,21 @@ export class Tree<K, V> {
             return this.insertLeaf(key, value);
         }
 
-        const node = this.internalTree.get(key);
-        if (this.isLeaf(node)) {
-            throw new Error("leaf node in the way");
+        let tree: Tree<K, V> = this;
+        for (const intermediateKey of rest) {
+            const possibleNode = tree.internalTree.get(intermediateKey);
+
+            if (tree.isLeaf(possibleNode)) {
+                throw new Error("leaf node in the way");
+            }
+
+            if (!possibleNode) {
+                tree = tree.insertBranch(intermediateKey);
+            } else {
+                tree = possibleNode.children;
+            }
         }
-        if (!node) {
-            return this.insertBranch(key).deepInsertLeaf(rest, value);
-        }
-        return node.children.deepInsertLeaf(rest, value);
+        return tree.insertLeaf(key, value);
     }
 
     public insert(path: Path<K>, value: V): Leaf<K, V> {
@@ -188,28 +197,19 @@ export class Tree<K, V> {
         return this;
     }
 
-    public any(predicate: (value: V, node: Leaf<K, V>) => boolean) {
+    public any(predicate: (value: V, node: Leaf<K, V>) => boolean): boolean {
         return this.reduce((result, value, node) => {
             return result || predicate(value, node);
         }, false);
     }
 
-    public filter(predicate: (value: V, node: Leaf<K, V>) => boolean) {
+    public filter(
+        predicate: (value: V, node: Leaf<K, V>) => boolean,
+    ): Tree<K, V> {
         return this.reduce((newTree, value, node) => {
             if (predicate(value, node)) {
                 const path = this.getNodePath(node);
-                const lastKey = path.pop() as K;
-                const prefix = path;
-
-                const deepTree = prefix.reduce((subTree, branchKey) => {
-                    return subTree.insertBranch(branchKey);
-                }, newTree);
-
-                if (this.isBranch(node)) {
-                    deepTree.insertBranch(lastKey);
-                } else {
-                    deepTree.insertLeaf(lastKey, node.value);
-                }
+                newTree.insert(path, value);
             }
             return newTree;
         }, new Tree());

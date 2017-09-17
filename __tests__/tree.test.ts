@@ -110,6 +110,24 @@ describe("Tree", () => {
         expect(newYorkTree.find(["unrelated", "branch"])).toBeUndefined();
     });
 
+    it("#filter: doesn't accidentally truncate branches", () => {
+        t.insert(["bands", "stove"], "new york");
+        t.insert(["bands", "sunn0)))"], "washington");
+        t.insert(["bands", "hum"], "illinois");
+
+        expect(t.find(["bands", "stove"])).toBeDefined();
+        expect(t.find(["bands", "sunn0)))"])).toBeDefined();
+        expect(t.find(["bands", "hum"])).toBeDefined();
+
+        const newTree = t.filter(value => {
+            return true;
+        });
+
+        expect(newTree.find(["bands", "stove"])).toBeDefined();
+        expect(newTree.find(["bands", "sunn0)))"])).toBeDefined();
+        expect(newTree.find(["bands", "hum"])).toBeDefined();
+    });
+
     it("iterator: can iterate over nodes", () => {
         t.insert(["bands", "stove"], "new york");
         t.insert(["bands", "sunn0)))"], "washingtion");
