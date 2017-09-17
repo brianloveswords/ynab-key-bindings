@@ -3,66 +3,74 @@ import { ynab } from "./ynab";
 (window as any).ynabKB = ynab;
 ynab
     .setDefaultModeExceptions(["input-mode"])
-    .mode("input-mode", bind => {
-        bind({
+    .mode("input-mode", localBind => {
+        localBind({
             keys: "Escape",
             command: "blurInput",
         });
     })
-    .mode("account-view", bind => {
-        bind({
+    .mode("account-view", localBind => {
+        localBind({
             keys: "Control s",
             command: "activateSearch",
         });
-        bind({
+        localBind({
             keys: "v r",
             command: "toggleReconciledTransations",
         });
-        bind({
+        localBind({
             keys: "i",
             command: "importTranactions",
         });
-        bind({
+        localBind({
             keys: "r",
             command: "reconcileAccount",
         });
+        localBind({
+            keys: "j",
+            command: "nextAccountItem",
+        });
+        localBind({
+            keys: "/",
+            command: "deselectAllAccounts",
+        });
     })
-    .mode("budget-view", bind => {
-        bind({
+    .mode("budget-view", localBind => {
+        localBind({
             keys: "c c",
             command: "collapseAll",
         });
-        bind({
+        localBind({
             keys: "c e",
             command: "expandAll",
         });
-        bind({
+        localBind({
             keys: "e b",
             command: "emptySelectedBudgets",
         });
-        bind({
+        localBind({
             keys: "e b",
             command: "emptySelectedBudgets",
         });
-        bind({
+        localBind({
             keys: "n",
             command: "nextMonth",
         });
-        bind({
+        localBind({
             keys: "p",
             command: "previousMonth",
         });
-        bind({
-            keys: "/",
-            command: "deselectAll",
-        });
-        bind({
+        localBind({
             keys: "f",
             command: "contextualFix",
         });
-        bind({
+        localBind({
             keys: "o",
             command: "showOverspent",
+        });
+        localBind({
+            keys: "/",
+            command: "deselectAllBudgets",
         });
     })
     .globalBind({
