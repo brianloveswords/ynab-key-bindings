@@ -28,8 +28,7 @@ export class Tree<K, V> {
 
     public *[Symbol.iterator](): IterableIterator<TreeNode<K, V>> {
         const trees: Array<Tree<K, V>> = [this];
-        for (let i = 0; trees[i]; i++) {
-            const tree = trees[i];
+        for (const tree of trees) {
             for (const [_, node] of tree.internalTree) {
                 yield node;
                 if (tree.isBranch(node)) {
@@ -64,17 +63,16 @@ export class Tree<K, V> {
     }
 
     public find(path: Path<K>): Maybe<TreeNode<K, V>> {
-        const key = path[path.length - 1];
-        const rest = path.slice(0, -1);
-
-        if (!key) {
+        if (!path.length) {
             return undefined;
         }
+
+        const [key, rest] = lastWithRest(path);
 
         let tree: Tree<K, V> = this;
         for (const intermediateKey of rest) {
             const possibleNode = tree.internalTree.get(intermediateKey);
-            if (!possibleNode || tree.isLeaf(possibleNode)) {
+            if (!tree.isBranch(possibleNode)) {
                 return undefined;
             }
             tree = possibleNode.children;
@@ -83,16 +81,12 @@ export class Tree<K, V> {
         return tree.internalTree.get(key);
     }
 
-    public deepInsertLeaf(path: Path<K>, value: V): Leaf<K, V> {
-        const key = path[path.length - 1];
-        const rest = path.slice(0, -1);
-
-        if (!key) {
+    public insert(path: Path<K>, value: V): Leaf<K, V> {
+        if (!path.length) {
             throw new Error("no key to insert leaf at");
         }
-        if (rest.length === 0) {
-            return this.insertLeaf(key, value);
-        }
+
+        const [key, rest] = lastWithRest(path);
 
         let tree: Tree<K, V> = this;
         for (const intermediateKey of rest) {
@@ -109,10 +103,6 @@ export class Tree<K, V> {
             }
         }
         return tree.insertLeaf(key, value);
-    }
-
-    public insert(path: Path<K>, value: V): Leaf<K, V> {
-        return this.deepInsertLeaf(path, value);
     }
 
     public map(fn: (value: V) => V): Tree<K, V> {
@@ -214,4 +204,8 @@ export class Tree<K, V> {
             return newTree;
         }, new Tree());
     }
+}
+
+function lastWithRest<T>(array: T[]): [T, T[]] {
+    return [array[array.length - 1], array.slice(0, -1)];
 }

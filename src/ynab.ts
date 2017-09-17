@@ -101,6 +101,8 @@ export const ynab = new App({
             }
             row.click();
         },
+
+        // tslint:disable-next-line:cyclomatic-complexity
         contextualFix: $ => {
             const checked = ".is-sub-category.is-checked";
             const quickBudget =

@@ -1,5 +1,5 @@
 import { DOMWrapper } from "./dom-wrapper";
-import { KeyBindings, KeyBinding } from "./key-bindings";
+import { KeyBindings, KeyBinding, PartialKeyBinding } from "./key-bindings";
 import { KeyReceiver } from "./key-receiver";
 
 type InvokedFromApp = (
@@ -41,6 +41,7 @@ export class App<ModeMap extends FunctionMap, CommandMap extends FunctionMap> {
         modes,
         commands,
     }: Options<ModeMap, CommandMap>) {
+        this.defaultExceptions = [];
         this.appRoot = new DOMWrapper(rootElement);
         this.modes = modes;
         this.commands = commands;
@@ -54,17 +55,20 @@ export class App<ModeMap extends FunctionMap, CommandMap extends FunctionMap> {
     }
 
     public makeBinding<M extends keyof ModeMap, C extends keyof CommandMap>(
-        binding: KeyBinding<M, C>,
+        binding: PartialKeyBinding<M, C>,
     ): KeyBinding<M, C> {
         const exceptions = this.defaultExceptions as M[];
-        if (!binding.except) {
-            binding.except = exceptions;
-        }
-        return binding;
+        return {
+            keys: binding.keys,
+            command: binding.command,
+            args: binding.args || [],
+            modes: binding.modes || [],
+            except: binding.except || exceptions,
+        };
     }
 
     public globalBind<M extends keyof ModeMap, C extends keyof CommandMap>(
-        partialBinding: KeyBinding<M, C>,
+        partialBinding: PartialKeyBinding<M, C>,
     ): this {
         this.bindings.add(this.makeBinding(partialBinding));
         return this;
@@ -72,10 +76,10 @@ export class App<ModeMap extends FunctionMap, CommandMap extends FunctionMap> {
 
     public mode<M extends keyof ModeMap, C extends keyof CommandMap>(
         name: M,
-        fn: (bindFn: (binding: KeyBinding<M, C>) => void) => void,
+        fn: (bindFn: (binding: PartialKeyBinding<M, C>) => void) => void,
     ): this {
         const modeSet = [name];
-        const bind = (partialBinding: KeyBinding<M, C>) => {
+        const bind = (partialBinding: PartialKeyBinding<M, C>) => {
             const binding = this.makeBinding(partialBinding);
             binding.modes = [...modeSet, ...(binding.modes || [])];
             this.globalBind(binding);
@@ -98,9 +102,11 @@ export class App<ModeMap extends FunctionMap, CommandMap extends FunctionMap> {
         );
     }
 
-    public invokeBinding(binding: KeyBinding, event: Event) {
+    public invokeBinding(binding: KeyBinding, event: Event): void {
         const action = this.commands[binding.command];
         const args = binding.args || [];
-        action.apply(binding.context || {}, [this.appRoot, event, ...args]);
+        action.apply({}, [this.appRoot, event, ...args]);
     }
+
+    // public showDebugInfo(): void { }
 }

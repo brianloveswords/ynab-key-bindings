@@ -40,8 +40,8 @@ describe("Tree", () => {
         expect(expected).toBe(found);
     });
 
-    it("#deepInsertLeaf: inserts a leaf deep into the tree", () => {
-        const expected = t.deepInsertLeaf(["a", "b", "c"], "the letter c");
+    it("#insert: inserts a leaf deep into the tree", () => {
+        const expected = t.insert(["a", "b", "c"], "the letter c");
         const found = t.find(["a", "b", "c"]);
         expect(expected).toBe(found);
     });

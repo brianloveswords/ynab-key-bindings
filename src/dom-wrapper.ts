@@ -13,10 +13,10 @@ export class DOMWrapper {
     public findParentWithClass(
         className: ClassName,
         element: HTMLElement = this.element,
-    ): HTMLElement | null {
+    ): HTMLElement | undefined {
         const parent = element.parentElement;
         if (!parent) {
-            return null;
+            return undefined;
         }
         if (parent.classList.contains(className)) {
             return parent;

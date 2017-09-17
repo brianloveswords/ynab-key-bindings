@@ -8,6 +8,8 @@
         "arrow-parens": false,
         "interface-name": false,
         "ordered-imports": false,
+        "no-null-keyword": true,
+        "cyclomatic-complexity": [true, 5],
         "trailing-comma": false
     },
     "rulesDirectory": []

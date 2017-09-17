@@ -1,16 +1,28 @@
+import {
+    Maybe,
+    isEmpty,
+    isIntersection,
+    arrayDifference,
+} from "./kitchen-sink";
 import { Tree } from "./tree";
 
 export interface KeyBinding<ModeName = string, CommandName = string> {
     keys: string;
     command: CommandName;
-    modes?: ModeName[];
-    except?: ModeName[];
-    args?: any[];
-    context?: object;
+    modes: ModeName[];
+    except: ModeName[];
+    args: any[];
+}
+
+export interface PartialKeyBinding<ModeName = string, CommandName = string> {
+    keys: string;
+    command: CommandName;
+    modes?: KeyBinding<ModeName, CommandName>["modes"];
+    except?: KeyBinding<ModeName, CommandName>["except"];
+    args?: KeyBinding<ModeName, CommandName>["args"];
 }
 
 type Keys = string[];
-type Maybe<T> = T | undefined;
 
 type FindResult = Maybe<PrefixResult | BindingResult>;
 
@@ -26,14 +38,14 @@ interface BindingResult {
 type InternalBindingTree = Tree<string, KeyBinding>;
 
 export class KeyBindings {
-    constructor(private tree: InternalBindingTree = new Tree()) { }
+    constructor(private bindings: InternalBindingTree = new Tree()) { }
 
     public add(binding: KeyBinding) {
         const treeInsertKey = binding.keys.split(/\s+/);
-        this.tree.insert(treeInsertKey, binding);
+        this.bindings.insert(treeInsertKey, binding);
     }
 
-    public find(keys: Keys, tree = this.tree): Maybe<FindResult> {
+    public find(keys: Keys, tree = this.bindings): Maybe<FindResult> {
         const maybeBinding = tree.find(keys);
 
         if (!maybeBinding) {
@@ -54,29 +66,23 @@ export class KeyBindings {
 
     public modeFilter(activeModes: string[]): KeyBindings {
         return new KeyBindings(
-            this.tree.filter(binding => {
-                const includedModes = binding.modes || [];
+            this.bindings.filter(binding => {
+                const includedModes = binding.modes;
 
                 // keep only excluded modes that haven't been explicitly
                 // specified in the included mode list
-                const excludedModes = (binding.except || [])
-                    .filter(m => includedModes.indexOf(m) === -1);
+                const excludedModes = arrayDifference(
+                    binding.except,
+                    includedModes,
+                );
 
-                if (!includedModes.length && !excludedModes.length) {
-                    return true;
-                }
+                const included = isEmpty(includedModes)
+                    ? true
+                    : isIntersection(includedModes, activeModes);
 
-                const included = includedModes.length
-                    ? includedModes.some(mode => {
-                        return activeModes.indexOf(mode) > -1;
-                    })
-                    : true;
-
-                const excluded = excludedModes.length
-                    ? excludedModes.some(mode => {
-                        return activeModes.indexOf(mode) > -1;
-                    })
-                    : false;
+                const excluded = isEmpty(excludedModes)
+                    ? false
+                    : isIntersection(excludedModes, activeModes);
 
                 return included && !excluded;
             }),
