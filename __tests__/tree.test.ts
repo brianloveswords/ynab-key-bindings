@@ -62,10 +62,7 @@ describe("Tree", () => {
         t.insert(["x", "y", "z"], "room");
 
         const sum = t.reduce((accum, node) => {
-            if (t.isLeaf(node)) {
-                return accum + node.value;
-            }
-            return accum;
+            return accum + node.value;
         }, "");
 
         expect(sum).toBe("cloakroom");
@@ -75,7 +72,7 @@ describe("Tree", () => {
         t.insert(["labels", "exploding in sound"], "leapling");
         t.insert(["labels", "relapse"], "cloakroom");
         const result = t.any(node => {
-            return t.isLeaf(node) && node.value === "leapling";
+            return node.value === "leapling";
         });
         expect(result).toBeTruthy();
     });
@@ -84,7 +81,7 @@ describe("Tree", () => {
         t.insert(["labels", "exploding in sound"], "leapling");
         t.insert(["labels", "relapse"], "cloakroom");
         const result = t.any(node => {
-            return t.isLeaf(node) && node.value === "this shouldn't be found";
+            return node.value === "this shouldn't be found";
         });
         expect(result).toBeFalsy();
     });
@@ -94,13 +91,6 @@ describe("Tree", () => {
         const result = t.insert(path, "plums");
         expect(t.getNodePath(result)).toMatchObject(path);
     });
-    // it("#prune: removes dead branches", () => {
-    //     t.prune();
-    //     expect(t.find(["branch"])).toBeDefined();
-    //     expect(t.find(["branch", "alive"])).toBeDefined();
-    //     expect(t.find(["branch", "dead"])).toBeUndefined();
-    //     expect(t.find(["a", "b", "c1"])).toBeDefined();
-    // });
 
     it("#filter: returns a new tree with only nodes that pass", () => {
         t.insert(["bands", "stove"], "new york");
@@ -110,9 +100,6 @@ describe("Tree", () => {
         t.insert(["unrelated", "branch"], "should not be included");
 
         const newYorkTree = t.filter(node => {
-            if (!t.isLeaf(node)) {
-                return false;
-            }
             return node.value === "new york";
         });
 

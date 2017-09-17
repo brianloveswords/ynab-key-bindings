@@ -108,7 +108,7 @@ export class Tree<K, V> {
         })(this, new Tree());
     }
 
-    public reduce<A>(
+    public reduceAll<A>(
         fn: (accum: A, node: TreeNode<K, V>, key: K) => A,
         accum: A,
     ): A {
@@ -121,6 +121,15 @@ export class Tree<K, V> {
             }
             return accum;
         })(this);
+    }
+
+    public reduce<A>(fn: (accum: A, node: Leaf<K, V>, key: K) => A, accum: A) {
+        return this.reduceAll((innerAccum, node, key) => {
+            if (this.isLeaf(node)) {
+                innerAccum = fn(innerAccum, node, key);
+            }
+            return innerAccum;
+        }, accum);
     }
 
     public isBranch(node: Maybe<TreeNode<K, V>>): node is Branch<K, V> {
@@ -144,13 +153,13 @@ export class Tree<K, V> {
         return this;
     }
 
-    public any(predicate: (node: TreeNode<K, V>, key: K) => boolean) {
+    public any(predicate: (node: Leaf<K, V>, key: K) => boolean) {
         return this.reduce((result, node, key) => {
             return result || predicate(node, key);
         }, false);
     }
 
-    public filter(predicate: (node: TreeNode<K, V>, key: K) => boolean) {
+    public filter(predicate: (node: Leaf<K, V>, key: K) => boolean) {
         return this.reduce((newTree, node, key) => {
             if (predicate(node, key)) {
                 const path = this.getNodePath(node);
