@@ -81,6 +81,19 @@ export class Tree<K, V> {
         return tree.internalTree.get(key);
     }
 
+    public findOrInsert(path: Path<K>, value: V): Leaf<K, V> {
+        const possibleNode = this.find(path);
+        if (this.isLeaf(possibleNode)) {
+            return possibleNode;
+        }
+        if (this.isBranch(possibleNode)) {
+            throw new Error(
+                `could not create leaf at ${path}, branch in the way`,
+            );
+        }
+        return this.insert(path, value);
+    }
+
     public insert(path: Path<K>, value: V): Leaf<K, V> {
         if (!path.length) {
             throw new Error("no key to insert leaf at");

@@ -148,4 +148,19 @@ describe("Tree", () => {
         }
         expect(found).toMatchObject(expected);
     });
+
+    it("#findOrCreate: finds item at key or creates a new one", () => {
+        expect(t.find(["bands", "stove"])).toBeUndefined();
+        t.findOrInsert(["bands", "stove"], "new york");
+        expect(t.find(["bands", "stove"])).toBeDefined();
+        t.findOrInsert(["bands", "stove"], "should not update");
+        expect((t.find(["bands", "stove"]) as any).value).toBe("new york");
+    });
+
+    it("#insert: will replace data", () => {
+        t.insert(["bands", "stove"], "new york");
+        expect((t.find(["bands", "stove"]) as any).value).toBe("new york");
+        t.insert(["bands", "stove"], "brooklyn");
+        expect((t.find(["bands", "stove"]) as any).value).toBe("brooklyn");
+    });
 });
