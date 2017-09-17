@@ -1,12 +1,14 @@
 type Maybe<T> = T | undefined;
 
 interface Branch<K, V> {
+    key: K;
     type: "branch";
     parent: Maybe<Tree<K, V>>;
-    subtree: Tree<K, V>;
+    children: Tree<K, V>;
 }
 
 interface Leaf<K, V> {
+    key: K;
     type: "leaf";
     parent: Maybe<Tree<K, V>>;
     value: V;
@@ -20,33 +22,38 @@ type InternalTree<K, V> = Map<K, TreeNode<K, V>>;
 
 export class Tree<K, V> {
     private internalTree: InternalTree<K, V>;
-    constructor(public parent?: Tree<K, V>) {
+    constructor(public parent?: Tree<K, V>, public fromBranch?: Branch<K, V>) {
         this.internalTree = new Map();
     }
 
-    public insertBranch(name: K): Tree<K, V> {
+    public insertBranch(key: K): Tree<K, V> {
+        const subtree = new Tree<K, V>(this);
         const branch: Branch<K, V> = {
+            key,
             type: "branch",
             parent: this,
-            subtree: new Tree(this),
+            children: subtree,
         };
-        this.internalTree.set(name, branch);
-        return branch.subtree;
+        subtree.fromBranch = branch;
+        this.internalTree.set(key, branch);
+        return branch.children;
     }
 
-    public insertLeaf(name: K, value: V): Leaf<K, V> {
+    public insertLeaf(key: K, value: V): Leaf<K, V> {
         const leaf: Leaf<K, V> = {
+            key,
             type: "leaf",
             parent: this,
             value,
         };
-        this.internalTree.set(name, leaf);
+        this.internalTree.set(key, leaf);
         return leaf;
     }
 
     public find(path: Path<K>): Maybe<TreeNode<K, V>> {
-        const key = path.shift();
-        const remaining = path;
+        const key = path[0];
+        const remaining = path.slice(1);
+
         if (!key) {
             return undefined;
         }
@@ -60,12 +67,13 @@ export class Tree<K, V> {
         if (this.isLeaf(node)) {
             return undefined;
         }
-        return node.subtree.find(remaining);
+        return node.children.find(remaining);
     }
 
     public deepInsertLeaf(path: Path<K>, value: V): Leaf<K, V> {
-        const key = path.shift();
-        const remaining = path;
+        const key = path[0];
+        const remaining = path.slice(1);
+
         if (!key) {
             throw new Error("no key to insert leaf at");
         }
@@ -80,7 +88,7 @@ export class Tree<K, V> {
         if (!node) {
             return this.insertBranch(key).deepInsertLeaf(remaining, value);
         }
-        return node.subtree.deepInsertLeaf(remaining, value);
+        return node.children.deepInsertLeaf(remaining, value);
     }
 
     public insert(path: Path<K>, value: V): Leaf<K, V> {
@@ -95,7 +103,7 @@ export class Tree<K, V> {
                 } else if (oldTree.isBranch(node)) {
                     const oldBranch = node;
                     const newBranchTree = newTree.insertBranch(key);
-                    mapper(oldBranch.subtree, newBranchTree);
+                    mapper(oldBranch.children, newBranchTree);
                 }
             }
             return newTree;
@@ -110,7 +118,7 @@ export class Tree<K, V> {
             for (const [key, node] of tree.internalTree) {
                 accum = fn(accum, node, key);
                 if (tree.isBranch(node)) {
-                    accum = reducer(node.subtree);
+                    accum = reducer(node.children);
                 }
             }
             return accum;
@@ -125,6 +133,14 @@ export class Tree<K, V> {
         return !!(node && node.type === "leaf");
     }
 
+    public getNodePath(node: TreeNode<K, V>, path: Path<K> = []): Path<K> {
+        path.unshift(node.key);
+        if (!node.parent || !node.parent.fromBranch) {
+            return path;
+        }
+        return this.getNodePath(node.parent.fromBranch, path);
+    }
+
     public empty() {
         this.internalTree = new Map();
         return this;
@@ -134,5 +150,13 @@ export class Tree<K, V> {
         return this.reduce((result, node, key) => {
             return result || predicate(node, key);
         }, false);
+    }
+
+    private isDeadBranch() {
+        return (
+            this.any(node => {
+                return this.isLeaf(node);
+            }) === false
+        );
     }
 }

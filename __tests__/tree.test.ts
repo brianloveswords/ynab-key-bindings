@@ -5,24 +5,15 @@ describe("Tree", () => {
 
     beforeEach(() => {
         t = new Tree();
-        t.insert(["a", "b", "c1"], "1");
-        t.insert(["a", "b", "c2"], "2");
-        t.insert(["x", "y", "z1"], "3");
-        t.insert(["x", "y", "z2"], "4");
-        const branch = t.insertBranch("branch");
-        branch.insertBranch("dead");
-        branch.insertLeaf("alive", "0");
     });
 
     it("#insertBranch: inserts a branches into the tree", () => {
-        t.empty();
         const hiBranch = t.insertBranch("hi");
         const byeBranch = hiBranch.insertBranch("bye");
         expect(byeBranch.parent).toBe(hiBranch);
     });
 
     it("#insertBranch: sets parents correctly", () => {
-        t.empty();
         const a = t.insertBranch("a");
         const b = a.insertBranch("b");
         const c = b.insertBranch("c");
@@ -35,12 +26,12 @@ describe("Tree", () => {
     });
 
     it("#find: finds a node from the tree", () => {
-        expect(t.find(["a", "b", "c1"])).toBeDefined();
+        t.insert(["a", "b", "c"], "defined");
+        expect(t.find(["a", "b", "c"])).toBeDefined();
         expect(t.find(["a", "not a key"])).toBeUndefined();
     });
 
     it("#insertLeaf: inserts a leaf in the tree", () => {
-        t.empty();
         const expected = t
             .insertBranch("a")
             .insertBranch("b")
@@ -56,40 +47,54 @@ describe("Tree", () => {
     });
 
     it("#map: turn one tree into another tree", () => {
-        const doubleTree = t.map(value => value + "!");
-        expect((doubleTree.find(["a", "b", "c1"]) as any).value).toBe("1!");
-        expect((doubleTree.find(["a", "b", "c2"]) as any).value).toBe("2!");
-        expect((doubleTree.find(["x", "y", "z1"]) as any).value).toBe("3!");
-        expect((doubleTree.find(["x", "y", "z2"]) as any).value).toBe("4!");
-        expect(doubleTree.find(["branch", "dead"])).toBeDefined();
-        expect(doubleTree.find(["branch", "alive"])).toBeDefined();
+        t.insert(["a", "b", "c"], "hi");
+        t.insert(["x", "y", "z"], "bye");
+        t.insertBranch("branch").insertBranch("dead");
+
+        const excitedTree = t.map(value => value + "!");
+        expect((excitedTree.find(["a", "b", "c"]) as any).value).toBe("hi!");
+        expect((excitedTree.find(["x", "y", "z"]) as any).value).toBe("bye!");
+        expect(excitedTree.find(["branch", "dead"])).toBeDefined();
     });
 
     it("#reduce: can reduce the tree to a single value", () => {
+        t.insert(["a", "b", "c"], "cloak");
+        t.insert(["x", "y", "z"], "room");
+
         const sum = t.reduce((accum, node) => {
             if (t.isLeaf(node)) {
-                return accum + parseInt(node.value, 10);
+                return accum + node.value;
             }
             return accum;
-        }, 0);
+        }, "");
 
-        expect(sum).toBe(10);
+        expect(sum).toBe("cloakroom");
     });
 
     it("#any: return true if any node passes the predicate", () => {
+        t.insert(["labels", "exploding in sound"], "leapling");
+        t.insert(["labels", "relapse"], "cloakroom");
         const result = t.any(node => {
-            return t.isLeaf(node) && node.value === "4";
+            return t.isLeaf(node) && node.value === "leapling";
         });
         expect(result).toBeTruthy();
     });
 
     it("#any: return false if nothing passes the predicate", () => {
+        t.insert(["labels", "exploding in sound"], "leapling");
+        t.insert(["labels", "relapse"], "cloakroom");
+
         const result = t.any(node => {
             return t.isLeaf(node) && node.value === "this shouldn't be found";
         });
         expect(result).toBeFalsy();
     });
 
+    it("#getNodePath: gets the keys on the path to the node", () => {
+        const path = ["x", "y", "z"];
+        const result = t.insert(path, "plums");
+        expect(t.getNodePath(result)).toMatchObject(path);
+    });
     // it("#prune: removes dead branches", () => {
     //     t.prune();
     //     expect(t.find(["branch"])).toBeDefined();
@@ -97,5 +102,6 @@ describe("Tree", () => {
     //     expect(t.find(["branch", "dead"])).toBeUndefined();
     //     expect(t.find(["a", "b", "c1"])).toBeDefined();
     // });
-    // it("#filter: returns a new true with only nodes that pass", () => { });
+
+    it("#filter: returns a new tree with only nodes that pass", () => { });
 });
