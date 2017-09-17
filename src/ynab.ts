@@ -31,7 +31,7 @@ export const ynab = new App({
         importTranactions: $ =>
             $.click(".accounts-toolbar-import-transactions"),
         reconcileAccount: $ => $.click(".accounts-header-reconcile"),
-        deselectAll: $ => {
+        deselectAllBudgets: $ => {
             const cancelSearch = ".transaction-search-cancel-icon";
             const budgetSelectAll =
                 ".budget-table-header .root-checkbox-button-square";
@@ -145,6 +145,17 @@ export const ynab = new App({
             const input = event.srcElement as HTMLInputElement | undefined;
             if (input && input.blur) {
                 input.blur();
+            }
+        },
+        deselectAllAccounts: $ => {
+            const selector = ".ynab - grid - header ynab-checkbox - button";
+            $.click(selector);
+            $.click(selector);
+        },
+        nextAccountItem: $ => {
+            if (!$.exists(".ynab-grid-body-row .is-checked")) {
+                $.click(".ynab-grid-body-row");
+                return;
             }
         },
     },
