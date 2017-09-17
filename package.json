@@ -3,7 +3,9 @@
     "version": "1.0.0",
     "description": "UserScript for TamperMonkey that provides keybindings for YNAB",
     "scripts": {
-        "build": "tsc && rollup build/index.js --o build/bundle.js --f iife && cat src/prelude.js build/bundle.js | pbcopy && osascript -e 'display notification \"Script copied to clipboard\" with title \"Script Builder\"' || echo 'copied script to clipboard'",
+        "build": "tsc && npm run post-build",
+        "watch": "tsc-watch --onSuccess 'npm run post-build'",
+        "post-build": "rollup build/index.js --o build/bundle.js --f iife && cat src/prelude.js build/bundle.js | (pbcopy && osascript -e 'display notification \"Script copied to clipboard\" with title \"Script Builder\"' || echo 'copied script to clipboard')",
         "start": "npm run build && node ./build/index",
         "lint": "tslint -c tslint.json 'src/**/*.{ts,tsx}'",
         "pretest": "npm run lint",
@@ -18,6 +20,7 @@
         "jest": "^21.1.0",
         "rollup": "^0.49.3",
         "ts-jest": "^21.0.1",
+        "tsc-watch": "^1.0.8",
         "tslint": "^5.7.0",
         "typescript": "^2.5.2"
     },
