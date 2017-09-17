@@ -107,14 +107,42 @@ export class Tree<K, V> {
     }
 
     public map(fn: (value: V) => V): Tree<K, V> {
-        return (function mapper(oldTree: Tree<K, V>, newTree: Tree<K, V>) {
-            for (const [key, node] of oldTree.internalTree) {
-                if (oldTree.isLeaf(node)) {
+        const newTree = new Tree<K, V>();
+        const trees = [
+            {
+                workingTree: newTree,
+                originalTree: this as Tree<K, V>,
+            },
+        ];
+
+        for (let i = 0; trees[i]; i++) {
+            const { originalTree, workingTree } = trees[i];
+            for (const [_, node] of originalTree.internalTree) {
+                if (this.isBranch(node)) {
+                    trees.push({
+                        originalTree: node.children,
+                        workingTree: workingTree.insertBranch(node.key),
+                    });
+                } else {
+                    workingTree.insertLeaf(node.key, fn(node.value));
+                }
+            }
+        }
+
+        return newTree;
+    }
+
+    // Keeping this around for posterity, but browsers don't support
+    // TCO so while this solution may be cleaner it will have
+    // degrading performance as trees get larger until it eventually
+    // busts the stack.
+    public mapRecursive(fn: (value: V) => V): Tree<K, V> {
+        return (function mapper(originalTree: Tree<K, V>, newTree: Tree<K, V>) {
+            for (const [key, node] of originalTree.internalTree) {
+                if (originalTree.isLeaf(node)) {
                     newTree.insertLeaf(key, fn(node.value));
-                } else if (oldTree.isBranch(node)) {
-                    const oldBranch = node;
-                    const newBranchTree = newTree.insertBranch(key);
-                    mapper(oldBranch.children, newBranchTree);
+                } else if (originalTree.isBranch(node)) {
+                    mapper(node.children, newTree.insertBranch(key));
                 }
             }
             return newTree;
