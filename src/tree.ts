@@ -51,8 +51,7 @@ export class Tree<K, V> {
     }
 
     public find(path: Path<K>): Maybe<TreeNode<K, V>> {
-        const key = path[0];
-        const remaining = path.slice(1);
+        const [key, ...rest] = path;
 
         if (!key) {
             return undefined;
@@ -61,23 +60,22 @@ export class Tree<K, V> {
         if (!node) {
             return undefined;
         }
-        if (remaining.length === 0) {
+        if (rest.length === 0) {
             return node || undefined;
         }
         if (this.isLeaf(node)) {
             return undefined;
         }
-        return node.children.find(remaining);
+        return node.children.find(rest);
     }
 
     public deepInsertLeaf(path: Path<K>, value: V): Leaf<K, V> {
-        const key = path[0];
-        const remaining = path.slice(1);
+        const [key, ...rest] = path;
 
         if (!key) {
             throw new Error("no key to insert leaf at");
         }
-        if (remaining.length === 0) {
+        if (rest.length === 0) {
             return this.insertLeaf(key, value);
         }
 
@@ -86,9 +84,9 @@ export class Tree<K, V> {
             throw new Error("leaf node in the way");
         }
         if (!node) {
-            return this.insertBranch(key).deepInsertLeaf(remaining, value);
+            return this.insertBranch(key).deepInsertLeaf(rest, value);
         }
-        return node.children.deepInsertLeaf(remaining, value);
+        return node.children.deepInsertLeaf(rest, value);
     }
 
     public insert(path: Path<K>, value: V): Leaf<K, V> {
@@ -152,11 +150,24 @@ export class Tree<K, V> {
         }, false);
     }
 
-    private isDeadBranch() {
-        return (
-            this.any(node => {
-                return this.isLeaf(node);
-            }) === false
-        );
+    public filter(predicate: (node: TreeNode<K, V>, key: K) => boolean) {
+        return this.reduce((newTree, node, key) => {
+            if (predicate(node, key)) {
+                const path = this.getNodePath(node);
+                const lastKey = path.pop() as K;
+                const prefix = path;
+
+                const deepTree = prefix.reduce((subTree, branchKey) => {
+                    return subTree.insertBranch(branchKey);
+                }, newTree);
+
+                if (this.isBranch(node)) {
+                    deepTree.insertBranch(lastKey);
+                } else {
+                    deepTree.insertLeaf(lastKey, node.value);
+                }
+            }
+            return newTree;
+        }, new Tree());
     }
 }

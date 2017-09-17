@@ -83,7 +83,6 @@ describe("Tree", () => {
     it("#any: return false if nothing passes the predicate", () => {
         t.insert(["labels", "exploding in sound"], "leapling");
         t.insert(["labels", "relapse"], "cloakroom");
-
         const result = t.any(node => {
             return t.isLeaf(node) && node.value === "this shouldn't be found";
         });
@@ -103,5 +102,24 @@ describe("Tree", () => {
     //     expect(t.find(["a", "b", "c1"])).toBeDefined();
     // });
 
-    it("#filter: returns a new tree with only nodes that pass", () => { });
+    it("#filter: returns a new tree with only nodes that pass", () => {
+        t.insert(["bands", "stove"], "new york");
+        t.insert(["bands", "sunn0)))"], "washingtion");
+        t.insert(["cities", "brooklyn"], "new york");
+        t.insert(["cities", "seattle"], "washington");
+        t.insert(["unrelated", "branch"], "should not be included");
+
+        const newYorkTree = t.filter(node => {
+            if (!t.isLeaf(node)) {
+                return false;
+            }
+            return node.value === "new york";
+        });
+
+        expect(newYorkTree.find(["bands", "stove"])).toBeDefined();
+        expect(newYorkTree.find(["cities", "brooklyn"])).toBeDefined();
+        expect(newYorkTree.find(["bands", "sunn0)))"])).toBeUndefined();
+        expect(newYorkTree.find(["cities", "seattle"])).toBeUndefined();
+        expect(newYorkTree.find(["unrelated", "branch"])).toBeUndefined();
+    });
 });
