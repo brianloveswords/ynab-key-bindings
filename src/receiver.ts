@@ -9,11 +9,11 @@ export class Receiver {
     private chainActive: boolean;
 
     constructor(
-        private bindingTree: BindingTree,
+        private bindings: BindingTree,
         private app: AppInstance,
         delay: number = 5000,
     ) {
-        this.bindingTree = bindingTree;
+        this.bindings = bindings;
         this.chainTimer = 0;
         this.keyArray = [];
         this.chainActive = false;
@@ -21,10 +21,10 @@ export class Receiver {
         this.setDelay(delay);
     }
 
-    public keyPress(key: string) {
+    public keyPress(key: string, bindings = this.bindings) {
         this.keyArray.push(key);
 
-        const binding = this.bindingTree.find(this.keyArray);
+        const binding = bindings.find(this.keyArray);
 
         if (binding) {
             if (binding.type === "binding") {
@@ -52,17 +52,17 @@ export class Receiver {
     public keyHandler(event: KeyboardEvent) {
         const key = event.key;
 
-        debug("active modes", this.app.activeModes());
+        const activeModes = this.app.activeModes(event);
+        debug("active modes", activeModes);
 
-        if (isElementInput(event.srcElement)) {
-            return true;
-        }
+        const possibleBindings = this.bindings.modeFilter(activeModes);
+        debug("possible bindings", possibleBindings);
 
         if (isMetaActive(event)) {
             return true;
         }
 
-        const maybeResult = this.keyPress(key);
+        const maybeResult = this.keyPress(key, possibleBindings);
 
         if (!maybeResult) {
             let result;
@@ -131,14 +131,6 @@ export class Receiver {
         window.clearTimeout(this.chainTimer);
         return this;
     }
-}
-
-function isElementInput(element: Element | null) {
-    if (!element) {
-        return false;
-    }
-
-    return element.nodeName === "INPUT" || element.nodeName === "TEXTAREA";
 }
 
 function isMetaActive(event: KeyboardEvent) {

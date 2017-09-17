@@ -29,7 +29,7 @@ export class App<
     M extends FunctionMap,
     C extends FunctionMap
     > extends Interactions {
-    public static isInputMode(event?: Event) {
+    public static isInputMode(event?: Event): boolean {
         if (!event) {
             return false;
         }
@@ -71,9 +71,9 @@ export class App<
         return this;
     }
 
-    public activeModes() {
+    public activeModes(event: Event): string[] {
         const modeNames = Object.keys(this.modes);
-        return modeNames.filter(name => this.modes[name].call(this));
+        return modeNames.filter(name => this.modes[name].call(this, event));
     }
 
     public invokeCommand<kC extends keyof C>(command: Command<kC>) {

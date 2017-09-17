@@ -17,33 +17,56 @@ interface BindingResult {
 }
 
 export class BindingTree {
-    private tree: Tree<string, Binding>;
-
-    constructor() {
-        this.tree = new Tree();
-    }
+    constructor(private tree: Tree<string, Binding> = new Tree()) { }
 
     public add(binding: KeyBinding<string, string>) {
         const treeInsertKey = binding.keys.split(/\s+/);
         this.tree.insert(treeInsertKey, binding);
     }
 
-    public find(keys: Keys): Maybe<FindResult> {
-        const maybeCommand = this.tree.find(keys);
+    public find(keys: Keys, tree = this.tree): Maybe<FindResult> {
+        const maybeBinding = tree.find(keys);
 
-        if (!maybeCommand) {
+        if (!maybeBinding) {
             return undefined;
         }
 
-        if (this.tree.isLeaf(maybeCommand)) {
+        if (tree.isLeaf(maybeBinding)) {
             return {
                 type: "binding",
-                binding: maybeCommand.value,
+                binding: maybeBinding.value,
             };
         }
 
         return {
             type: "prefix",
         };
+    }
+
+    public modeFilter(activeModes: string[]): BindingTree {
+        return new BindingTree(
+            this.tree.filter(binding => {
+                const includedModes = binding.modes || [];
+                const excludedModes = binding.except || [];
+
+                if (!includedModes.length && !excludedModes.length) {
+                    return true;
+                }
+
+                const included = includedModes.length
+                    ? includedModes.some(mode => {
+                        return activeModes.indexOf(mode) > -1;
+                    })
+                    : true;
+
+                const excluded = excludedModes.length
+                    ? excludedModes.some(mode => {
+                        return activeModes.indexOf(mode) > -1;
+                    })
+                    : false;
+
+                return included && !excluded;
+            }),
+        );
     }
 }
