@@ -22,6 +22,7 @@ export const ynab = new App({
         },
         goToBudget: $ => $.click(".navlink-budget a"),
         goToAllAccounts: $ => $.click(".navlink-accounts a"),
+        goToReports: $ => $.click(".navlink-reports a"),
         nextMonth: $ => $.click(".budget-header-calendar-next"),
         previousMonth: $ => $.click(".budget-header-calendar-prev"),
         collapseAll: $ => $.clickAll(".budget-table-cell-name .flaticon.down"),

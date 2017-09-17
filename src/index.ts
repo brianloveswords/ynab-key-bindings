@@ -1,129 +1,124 @@
 import { ynab } from "./ynab";
 (window as any).DEBUG_MODE = true;
 (window as any).ynabKB = ynab;
-
 ynab
     .setDefaultModeExceptions(["input-mode"])
-    .addBinding({
-        keys: "Escape",
-        command: "blurInput",
-        modes: ["input-mode"],
+    .mode("input-mode", bind => {
+        bind({
+            keys: "Escape",
+            command: "blurInput",
+        });
     })
-    .addBinding({
-        keys: "Control s",
-        command: "activateSearch",
-        modes: ["account-view"],
+    .mode("account-view", bind => {
+        bind({
+            keys: "Control s",
+            command: "activateSearch",
+        });
+        bind({
+            keys: "v r",
+            command: "toggleReconciledTransations",
+        });
+        bind({
+            keys: "i",
+            command: "importTranactions",
+        });
+        bind({
+            keys: "r",
+            command: "reconcileAccount",
+        });
     })
-    .addBinding({
-        keys: "v r",
-        command: "toggleReconciledTransations",
-        modes: ["account-view"],
+    .mode("budget-view", bind => {
+        bind({
+            keys: "c c",
+            command: "collapseAll",
+        });
+        bind({
+            keys: "c e",
+            command: "expandAll",
+        });
+        bind({
+            keys: "e b",
+            command: "emptySelectedBudgets",
+        });
+        bind({
+            keys: "e b",
+            command: "emptySelectedBudgets",
+        });
+        bind({
+            keys: "n",
+            command: "nextMonth",
+        });
+        bind({
+            keys: "p",
+            command: "previousMonth",
+        });
+        bind({
+            keys: "/",
+            command: "deselectAll",
+        });
+        bind({
+            keys: "f",
+            command: "contextualFix",
+        });
+        bind({
+            keys: "o",
+            command: "showOverspent",
+        });
     })
-    .addBinding({
-        keys: "i",
-        command: "importTranactions",
-        modes: ["account-view"],
-    })
-    .addBinding({
-        keys: "r",
-        command: "reconcileAccount",
-        modes: ["account-view"],
-    })
-    .addBinding({
-        keys: "c c",
-        command: "collapseAll",
-        modes: ["budget-view"],
-    })
-    .addBinding({
-        keys: "c e",
-        command: "expandAll",
-        modes: ["budget-view"],
-    })
-    .addBinding({
-        keys: "e b",
-        command: "emptySelectedBudgets",
-        modes: ["budget-view"],
-    })
-    .addBinding({
-        keys: "e b",
-        command: "emptySelectedBudgets",
-        modes: ["budget-view"],
-    })
-    .addBinding({
-        keys: "m n",
-        command: "previousMonth",
-        modes: ["budget-view"],
-    })
-    .addBinding({
-        keys: "m p",
-        command: "nextMonth",
-        modes: ["budget-view"],
-    })
-    .addBinding({
-        keys: "/",
-        command: "deselectAll",
-        modes: ["budget-view"],
-    })
-    .addBinding({
-        keys: "f",
-        command: "contextualFix",
-        modes: ["budget-view"],
-    })
-    .addBinding({
-        keys: "o",
-        command: "showOverspent",
-        modes: ["budget-view"],
-    })
-    .addBinding({
+    .globalBind({
         keys: "g 1",
         command: "goToAccount",
         args: [1],
     })
-    .addBinding({
+    .globalBind({
         keys: "g 2",
         command: "goToAccount",
         args: [2],
     })
-    .addBinding({
+    .globalBind({
         keys: "g 3",
         command: "goToAccount",
         args: [3],
     })
-    .addBinding({
+    .globalBind({
         keys: "g 4",
         command: "goToAccount",
         args: [4],
     })
-    .addBinding({
+    .globalBind({
         keys: "g 5",
         command: "goToAccount",
         args: [5],
     })
-    .addBinding({
+    .globalBind({
         keys: "g 6",
         command: "goToAccount",
         args: [6],
     })
-    .addBinding({
+    .globalBind({
         keys: "g 7",
         command: "goToAccount",
         args: [7],
     })
-    .addBinding({
+    .globalBind({
         keys: "g 8",
         command: "goToAccount",
         args: [8],
     })
-    .addBinding({
+    .globalBind({
         keys: "g 9",
         command: "goToAccount",
         args: [9],
     })
-    .addBinding({
+    .globalBind({
         keys: "g b",
         command: "goToBudget",
     })
-    .addBinding({
+    .globalBind({
+        keys: "g r",
+        command: "goToReports",
+    })
+    .globalBind({
         keys: "g a",
         command: "goToAllAccounts",
     });

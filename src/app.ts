@@ -53,18 +53,40 @@ export class App<ModeMap extends FunctionMap, CommandMap extends FunctionMap> {
         );
     }
 
-    public addBinding<M extends keyof ModeMap, C extends keyof CommandMap>(
+    public makeBinding<M extends keyof ModeMap, C extends keyof CommandMap>(
         binding: KeyBinding<M, C>,
-    ) {
+    ): KeyBinding<M, C> {
         const exceptions = this.defaultExceptions as M[];
         if (!binding.except) {
             binding.except = exceptions;
         }
-        this.bindings.add(binding);
+        return binding;
+    }
+
+    public globalBind<M extends keyof ModeMap, C extends keyof CommandMap>(
+        partialBinding: KeyBinding<M, C>,
+    ): this {
+        this.bindings.add(this.makeBinding(partialBinding));
         return this;
     }
 
-    public setDefaultModeExceptions<M extends keyof ModeMap>(modeNames: M[]) {
+    public mode<M extends keyof ModeMap, C extends keyof CommandMap>(
+        name: M,
+        fn: (bindFn: (binding: KeyBinding<M, C>) => void) => void,
+    ): this {
+        const modeSet = [name];
+        const bind = (partialBinding: KeyBinding<M, C>) => {
+            const binding = this.makeBinding(partialBinding);
+            binding.modes = [...modeSet, ...(binding.modes || [])];
+            this.globalBind(binding);
+        };
+        fn(bind);
+        return this;
+    }
+
+    public setDefaultModeExceptions<M extends keyof ModeMap>(
+        modeNames: M[],
+    ): this {
         this.defaultExceptions = modeNames;
         return this;
     }
