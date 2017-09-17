@@ -1,23 +1,25 @@
-import { App, AppInstance } from "./app";
+import { App } from "./app";
+import { DOMWrapper } from "./dom-wrapper";
 
-export const ynab: AppInstance = new App({
-    root: document.body,
+const $ = new DOMWrapper(document.body);
+export const ynab = new App({
+    root: $,
     modes: {
-        "modal-open": () => ynab.exists(".modal-popup"),
-        "account-view": () => ynab.exists(".accounts-header"),
-        "budget-view": () => ynab.exists(".budget-header"),
-        "reports-view": () => ynab.exists(".reports-header"),
+        "modal-open": () => $.exists(".modal-popup"),
+        "account-view": () => $.exists(".accounts-header"),
+        "budget-view": () => $.exists(".budget-header"),
+        "reports-view": () => $.exists(".reports-header"),
         "input-mode": App.isInputMode,
     },
     commands: {
         addTransaction() {
-            ynab.click(".add-transaction");
+            $.click(".add-transaction");
         },
         activateSearch() {
-            ynab.focus(".transaction-search-input");
+            $.focus(".transaction-search-input");
         },
         goToAccount(acctNumber: number) {
-            const accounts = ynab.selectAll(".nav-account-row");
+            const accounts = $.selectAll(".nav-account-row");
             const account = accounts[acctNumber - 1] as HTMLAnchorElement;
 
             if (account) {
@@ -25,62 +27,60 @@ export const ynab: AppInstance = new App({
             }
         },
         goToBudget() {
-            ynab.click(".navlink-budget a");
+            $.click(".navlink-budget a");
         },
         goToAllAccounts() {
-            ynab.click(".navlink-accounts a");
+            $.click(".navlink-accounts a");
         },
         nextMonth() {
-            ynab.click(".budget-header-calendar-next");
+            $.click(".budget-header-calendar-next");
         },
         previousMonth() {
-            ynab.click(".budget-header-calendar-prev");
+            $.click(".budget-header-calendar-prev");
         },
         collapseAll() {
-            ynab.clickAll(".budget-table-cell-name .flaticon.down");
+            $.clickAll(".budget-table-cell-name .flaticon.down");
         },
         expandAll() {
-            ynab.clickAll(".budget-table-cell-name .flaticon.right");
+            $.clickAll(".budget-table-cell-name .flaticon.right");
         },
         clearSelection() {
-            ynab.click(".budget-table .budget-table-cell-name");
+            $.click(".budget-table .budget-table-cell-name");
         },
         importTranactions() {
-            ynab.click(".accounts-toolbar-import-transactions");
+            $.click(".accounts-toolbar-import-transactions");
         },
         reconcileAccount() {
-            ynab.click(".accounts-header-reconcile");
+            $.click(".accounts-header-reconcile");
         },
         deselectAll() {
             const cancelSearch = ".transaction-search-cancel-icon";
             const budgetSelectAll =
-                ".budget-table-header .ynab-checkbox-button-square";
+                ".budget-table-header .root-checkbox-button-square";
 
-            if (ynab.exists(cancelSearch)) {
-                ynab.click(cancelSearch);
+            if ($.exists(cancelSearch)) {
+                $.click(cancelSearch);
                 return;
             }
 
-            if (ynab.exists(budgetSelectAll)) {
+            if ($.exists(budgetSelectAll)) {
                 // click once to select everything, another time to deselect
-                ynab
-                    .click(budgetSelectAll)
+                $.click(budgetSelectAll)
                     .click(budgetSelectAll)
                     .blur(".is-editing input");
                 return;
             }
         },
         toggleReconciledTransations() {
-            ynab
-                .click(".accounts-toolbar-all-dates")
-                // yeah, "fitlers". that's what's in the css.
-                .click(
-                ".modal-account-fitlers-show-reconciled .ynab-checkbox-button",
-            )
-                .click(".modal-account-filters .button-primary");
+            const dateSelector = ".accounts-toolbar-all-dates";
+            // yeah, "fitlers". that's what's in the css.
+            const checkboxSelector =
+                ".modal-account-fitlers-show-reconciled .root-checkbox-button";
+            const okayButton = ".modal-account-filters .button-primary";
+            $.click(dateSelector).click(checkboxSelector).click(okayButton);
         },
         emptySelectedBudgets() {
-            const allSelected = ynab.selectAll(
+            const allSelected = $.selectAll(
                 ".is-checked .budget-table-cell-available",
             );
 
@@ -90,7 +90,7 @@ export const ynab: AppInstance = new App({
                 ) as HTMLElement;
                 available.click();
 
-                const modal = ynab.select(".modal-budget-move-money");
+                const modal = $.select(".modal-budget-move-money");
                 const toField = modal.querySelector(
                     ".categories-dropdown-container .user-data",
                 ) as HTMLInputElement;
@@ -108,14 +108,14 @@ export const ynab: AppInstance = new App({
         showOverspent() {
             let selector = ".is-checked ~ * .cautious";
 
-            if (!ynab.exists(selector)) {
+            if (!$.exists(selector)) {
                 selector = ".cautious";
             }
 
-            const element = ynab.select(selector);
+            const element = $.select(selector);
             element.scrollIntoView();
 
-            const row = ynab.findParentWithClass(element, "budget-table-row");
+            const row = $.findParentWithClass("budget-table-row", element);
             if (!row) {
                 throw new Error(
                     "could not find .budget-table-row as a parent of element",
@@ -130,14 +130,14 @@ export const ynab: AppInstance = new App({
 
             // if there's a bunch of stuff checked or nothing checked, use the
             // quick budget feature
-            const checkedElements = ynab.selectAll(checked);
+            const checkedElements = $.selectAll(checked);
             if (checkedElements.length > 1 || checkedElements.length === 0) {
-                ynab.click(quickBudget);
+                $.click(quickBudget);
                 return;
             }
 
             const checkedCautious = ".is-sub-category.is-checked .cautious";
-            if (!ynab.exists(checkedCautious)) {
+            if (!$.exists(checkedCautious)) {
                 return;
             }
 
@@ -146,20 +146,20 @@ export const ynab: AppInstance = new App({
             const okButton = ".modal .button-primary";
             const cancelButton = ".modal .button-cancel";
 
-            ynab.click(checkedCautious);
+            $.click(checkedCautious);
 
-            if (!ynab.exists(".modal")) {
-                ynab.click(quickBudget);
+            if (!$.exists(".modal")) {
+                $.click(quickBudget);
                 return;
             }
 
-            if (ynab.exists(".modal-budget-move-money")) {
+            if ($.exists(".modal-budget-move-money")) {
                 // it's not overspent, it's under target
-                ynab.click(cancelButton).click(quickBudget);
+                $.click(cancelButton).click(quickBudget);
                 return;
             }
 
-            ynab.mousedown(downArrow).mousedown(toBeBudgeted).click(okButton);
+            $.mousedown(downArrow).mousedown(toBeBudgeted).click(okButton);
         },
     },
 });

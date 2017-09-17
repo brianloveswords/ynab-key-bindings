@@ -3,28 +3,29 @@ import { KeyBinding } from "./app";
 
 type Keys = string[];
 type Maybe<T> = T | undefined;
-type Binding = KeyBinding<string, string>;
 
-type FindResult = Maybe<PrefixResult | BindingResult>;
+type FindResult<M, C> = Maybe<PrefixResult | BindingResult<M, C>>;
 
 interface PrefixResult {
     type: "prefix";
 }
 
-interface BindingResult {
+interface BindingResult<M, C> {
     type: "binding";
-    binding: Binding;
+    binding: KeyBinding<M, C>;
 }
 
-export class BindingTree {
-    constructor(private tree: Tree<string, Binding> = new Tree()) { }
+type InternalBindingTree<M, C> = Tree<string, KeyBinding<M, C>>;
 
-    public add(binding: KeyBinding<string, string>) {
+export class BindingTree<M extends string, C extends string> {
+    constructor(private tree: InternalBindingTree<M, C> = new Tree()) { }
+
+    public add(binding: KeyBinding<M, C>) {
         const treeInsertKey = binding.keys.split(/\s+/);
         this.tree.insert(treeInsertKey, binding);
     }
 
-    public find(keys: Keys, tree = this.tree): Maybe<FindResult> {
+    public find(keys: Keys, tree = this.tree): Maybe<FindResult<M, C>> {
         const maybeBinding = tree.find(keys);
 
         if (!maybeBinding) {
@@ -43,7 +44,7 @@ export class BindingTree {
         };
     }
 
-    public modeFilter(activeModes: string[]): BindingTree {
+    public modeFilter(activeModes: string[]): BindingTree<M, C> {
         return new BindingTree(
             this.tree.filter(binding => {
                 const includedModes = binding.modes || [];

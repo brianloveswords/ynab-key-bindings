@@ -1,4 +1,4 @@
-import { Interactions } from "./interactions";
+import { DOMWrapper } from "./dom-wrapper";
 import { BindingTree } from "./binding-tree";
 import { Receiver } from "./receiver";
 
@@ -8,27 +8,24 @@ interface FunctionMap {
     [x: string]: Callable;
 }
 
-interface Options<M extends FunctionMap, C extends FunctionMap> {
-    root: HTMLElement;
-    modes: M;
-    commands: C;
+interface Options<ModeMap extends FunctionMap, CommandMap extends FunctionMap> {
+    root: DOMWrapper;
+    modes: ModeMap;
+    commands: CommandMap;
 }
 
-type Command<kC> = kC | { name: kC; args: any[] };
+type Command<CommandName> = CommandName | { name: CommandName; args: any[] };
 
-export interface KeyBinding<kM, kC> {
+export interface KeyBinding<ModeName, CommandName> {
     keys: string;
-    modes?: kM[];
-    except?: kM[];
-    command: Command<kC>;
+    modes?: ModeName[];
+    except?: ModeName[];
+    command: Command<CommandName>;
 }
 
 export type AppInstance = App<FunctionMap, FunctionMap>;
 
-export class App<
-    M extends FunctionMap,
-    C extends FunctionMap
-    > extends Interactions {
+export class App<ModeMap extends FunctionMap, CommandMap extends FunctionMap> {
     public static isInputMode(event?: Event): boolean {
         if (!event) {
             return false;
@@ -40,33 +37,39 @@ export class App<
         );
     }
 
-    private modes: M;
-    private commands: C;
-    private defaultExceptions: Array<keyof M>;
-    private bindingTree: BindingTree;
-    private receiver: Receiver;
+    private modes: ModeMap;
+    private commands: CommandMap;
+    private defaultExceptions: Array<keyof ModeMap>;
+    private bindings: BindingTree<string, string>;
+    private receiver: Receiver<string, string>;
 
-    constructor({ root, modes, commands }: Options<M, C>) {
-        super(root);
+    constructor({ root, modes, commands }: Options<ModeMap, CommandMap>) {
         this.modes = modes;
         this.commands = commands;
-        this.bindingTree = new BindingTree();
-        this.receiver = new Receiver(this.bindingTree, this);
-        root.addEventListener("keydown", this.receiver.keyHandler, true);
+        this.bindings = new BindingTree();
+        this.receiver = new Receiver(this.bindings, this);
+        root.element.addEventListener(
+            "keydown",
+            this.receiver.keyHandler,
+            true,
+        );
     }
 
-    public addBinding<kM extends keyof M, kC extends keyof C>(
-        binding: KeyBinding<kM, kC>,
-    ) {
-        const exceptions = this.defaultExceptions as kM[];
+    public addBinding<
+        ModeName extends keyof ModeMap,
+        CommandName extends keyof CommandMap
+        >(binding: KeyBinding<ModeName, CommandName>) {
+        const exceptions = this.defaultExceptions as ModeName[];
         if (!binding.except) {
             binding.except = exceptions;
         }
-        this.bindingTree.add(binding);
+        this.bindings.add(binding);
         return this;
     }
 
-    public setDefaultModeExceptions<kM extends keyof M>(modeNames: kM[]) {
+    public setDefaultModeExceptions<ModeName extends keyof ModeMap>(
+        modeNames: ModeName[],
+    ) {
         this.defaultExceptions = modeNames;
         return this;
     }
@@ -76,7 +79,7 @@ export class App<
         return modeNames.filter(name => this.modes[name].call(this, event));
     }
 
-    public invokeCommand<kC extends keyof C>(command: Command<kC>) {
+    public invokeCommand(command: Command<string>) {
         let action;
         if (typeof command === "string") {
             action = this.commands[command];

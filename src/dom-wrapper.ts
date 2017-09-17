@@ -1,8 +1,8 @@
 type Selector = string;
 type ClassName = string;
 
-export class Interactions {
-    constructor(private root: HTMLElement) { }
+export class DOMWrapper {
+    constructor(public element: HTMLElement) { }
 
     public wait(ms: number) {
         return new Promise(resolve => {
@@ -11,8 +11,8 @@ export class Interactions {
     }
 
     public findParentWithClass(
-        element: HTMLElement,
         className: ClassName,
+        element: HTMLElement = this.element,
     ): HTMLElement | null {
         const parent = element.parentElement;
         if (!parent) {
@@ -21,10 +21,10 @@ export class Interactions {
         if (parent.classList.contains(className)) {
             return parent;
         }
-        return this.findParentWithClass(parent, className);
+        return this.findParentWithClass(className, parent);
     }
 
-    public select(selector: Selector, element = this.root): HTMLElement {
+    public select(selector: Selector, element = this.element): HTMLElement {
         const found = element.querySelector(selector);
 
         if (!found) {
@@ -36,12 +36,15 @@ export class Interactions {
 
         return found as HTMLElement;
     }
-    public selectAll(selector: Selector, element = this.root): HTMLElement[] {
+    public selectAll(
+        selector: Selector,
+        element = this.element,
+    ): HTMLElement[] {
         return [...element.querySelectorAll(selector)] as HTMLElement[];
     }
 
     public exists(selector: Selector): boolean {
-        const found = this.root.querySelectorAll(selector);
+        const found = this.element.querySelectorAll(selector);
         return found.length > 0;
     }
 

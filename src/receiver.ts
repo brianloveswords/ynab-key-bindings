@@ -2,14 +2,14 @@ import { BindingTree } from "./binding-tree";
 import { AppInstance } from "./app";
 import { debug } from "./util";
 
-export class Receiver {
+export class Receiver<C extends string, M extends string> {
     private keyArray: string[];
     private chainDelay: number;
     private chainTimer: number;
     private chainActive: boolean;
 
     constructor(
-        private bindings: BindingTree,
+        private bindings: BindingTree<C, M>,
         private app: AppInstance,
         delay: number = 5000,
     ) {
