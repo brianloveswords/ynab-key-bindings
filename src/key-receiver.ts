@@ -1,15 +1,15 @@
-import { BindingTree } from "./binding-tree";
+import { KeyBindings } from "./key-bindings";
 import { AppInstance } from "./app";
 import { debug } from "./util";
 
-export class Receiver<C extends string, M extends string> {
+export class KeyReceiver {
     private keyArray: string[];
     private chainDelay: number;
     private chainTimer: number;
     private chainActive: boolean;
 
     constructor(
-        private bindings: BindingTree<C, M>,
+        private bindings: KeyBindings,
         private app: AppInstance,
         delay: number = 5000,
     ) {

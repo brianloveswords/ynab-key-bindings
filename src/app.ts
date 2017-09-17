@@ -1,6 +1,6 @@
 import { DOMWrapper } from "./dom-wrapper";
-import { BindingTree } from "./binding-tree";
-import { Receiver } from "./receiver";
+import { KeyBindings, KeyBinding, Command } from "./key-bindings";
+import { KeyReceiver } from "./key-receiver";
 
 type Callable = (...args: any[]) => any;
 
@@ -12,15 +12,6 @@ interface Options<ModeMap extends FunctionMap, CommandMap extends FunctionMap> {
     root: DOMWrapper;
     modes: ModeMap;
     commands: CommandMap;
-}
-
-type Command<CommandName> = CommandName | { name: CommandName; args: any[] };
-
-export interface KeyBinding<ModeName, CommandName> {
-    keys: string;
-    modes?: ModeName[];
-    except?: ModeName[];
-    command: Command<CommandName>;
 }
 
 export type AppInstance = App<FunctionMap, FunctionMap>;
@@ -40,14 +31,14 @@ export class App<ModeMap extends FunctionMap, CommandMap extends FunctionMap> {
     private modes: ModeMap;
     private commands: CommandMap;
     private defaultExceptions: Array<keyof ModeMap>;
-    private bindings: BindingTree<string, string>;
-    private receiver: Receiver<string, string>;
+    private bindings: KeyBindings;
+    private receiver: KeyReceiver;
 
     constructor({ root, modes, commands }: Options<ModeMap, CommandMap>) {
         this.modes = modes;
         this.commands = commands;
-        this.bindings = new BindingTree();
-        this.receiver = new Receiver(this.bindings, this);
+        this.bindings = new KeyBindings();
+        this.receiver = new KeyReceiver(this.bindings, this);
         root.element.addEventListener(
             "keydown",
             this.receiver.keyHandler,

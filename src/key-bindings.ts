@@ -1,31 +1,41 @@
 import { Tree } from "./tree";
-import { KeyBinding } from "./app";
+
+export type Command<CommandName> =
+    | CommandName
+    | { name: CommandName; args: any[] };
+
+export interface KeyBinding<ModeName = string, CommandName = string> {
+    keys: string;
+    modes?: ModeName[];
+    except?: ModeName[];
+    command: Command<CommandName>;
+}
 
 type Keys = string[];
 type Maybe<T> = T | undefined;
 
-type FindResult<M, C> = Maybe<PrefixResult | BindingResult<M, C>>;
+type FindResult = Maybe<PrefixResult | BindingResult>;
 
 interface PrefixResult {
     type: "prefix";
 }
 
-interface BindingResult<M, C> {
+interface BindingResult {
     type: "binding";
-    binding: KeyBinding<M, C>;
+    binding: KeyBinding;
 }
 
-type InternalBindingTree<M, C> = Tree<string, KeyBinding<M, C>>;
+type InternalBindingTree = Tree<string, KeyBinding>;
 
-export class BindingTree<M extends string, C extends string> {
-    constructor(private tree: InternalBindingTree<M, C> = new Tree()) { }
+export class KeyBindings {
+    constructor(private tree: InternalBindingTree = new Tree()) { }
 
-    public add(binding: KeyBinding<M, C>) {
+    public add(binding: KeyBinding) {
         const treeInsertKey = binding.keys.split(/\s+/);
         this.tree.insert(treeInsertKey, binding);
     }
 
-    public find(keys: Keys, tree = this.tree): Maybe<FindResult<M, C>> {
+    public find(keys: Keys, tree = this.tree): Maybe<FindResult> {
         const maybeBinding = tree.find(keys);
 
         if (!maybeBinding) {
@@ -44,8 +54,8 @@ export class BindingTree<M extends string, C extends string> {
         };
     }
 
-    public modeFilter(activeModes: string[]): BindingTree<M, C> {
-        return new BindingTree(
+    public modeFilter(activeModes: string[]): KeyBindings {
+        return new KeyBindings(
             this.tree.filter(binding => {
                 const includedModes = binding.modes || [];
                 const excludedModes = binding.except || [];
