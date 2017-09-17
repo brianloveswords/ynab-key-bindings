@@ -109,12 +109,12 @@ export class Tree<K, V> {
     }
 
     public reduceAll<A>(
-        fn: (accum: A, node: TreeNode<K, V>, key: K) => A,
+        fn: (accum: A, node: TreeNode<K, V>) => A,
         accum: A,
     ): A {
         return (function reducer(tree: Tree<K, V>) {
-            for (const [key, node] of tree.internalTree) {
-                accum = fn(accum, node, key);
+            for (const [_, node] of tree.internalTree) {
+                accum = fn(accum, node);
                 if (tree.isBranch(node)) {
                     accum = reducer(node.children);
                 }
@@ -123,10 +123,13 @@ export class Tree<K, V> {
         })(this);
     }
 
-    public reduce<A>(fn: (accum: A, node: Leaf<K, V>, key: K) => A, accum: A) {
-        return this.reduceAll((innerAccum, node, key) => {
+    public reduce<A>(
+        fn: (accum: A, value: V, node: Leaf<K, V>) => A,
+        accum: A,
+    ) {
+        return this.reduceAll((innerAccum, node) => {
             if (this.isLeaf(node)) {
-                innerAccum = fn(innerAccum, node, key);
+                innerAccum = fn(innerAccum, node.value, node);
             }
             return innerAccum;
         }, accum);
@@ -153,15 +156,15 @@ export class Tree<K, V> {
         return this;
     }
 
-    public any(predicate: (node: Leaf<K, V>, key: K) => boolean) {
-        return this.reduce((result, node, key) => {
-            return result || predicate(node, key);
+    public any(predicate: (value: V, node: Leaf<K, V>) => boolean) {
+        return this.reduce((result, value, node) => {
+            return result || predicate(value, node);
         }, false);
     }
 
-    public filter(predicate: (node: Leaf<K, V>, key: K) => boolean) {
-        return this.reduce((newTree, node, key) => {
-            if (predicate(node, key)) {
+    public filter(predicate: (value: V, node: Leaf<K, V>) => boolean) {
+        return this.reduce((newTree, value, node) => {
+            if (predicate(value, node)) {
                 const path = this.getNodePath(node);
                 const lastKey = path.pop() as K;
                 const prefix = path;

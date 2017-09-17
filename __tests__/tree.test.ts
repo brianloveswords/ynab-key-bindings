@@ -61,8 +61,8 @@ describe("Tree", () => {
         t.insert(["a", "b", "c"], "cloak");
         t.insert(["x", "y", "z"], "room");
 
-        const sum = t.reduce((accum, node) => {
-            return accum + node.value;
+        const sum = t.reduce((accum, value) => {
+            return accum + value;
         }, "");
 
         expect(sum).toBe("cloakroom");
@@ -71,8 +71,8 @@ describe("Tree", () => {
     it("#any: return true if any node passes the predicate", () => {
         t.insert(["labels", "exploding in sound"], "leapling");
         t.insert(["labels", "relapse"], "cloakroom");
-        const result = t.any(node => {
-            return node.value === "leapling";
+        const result = t.any(value => {
+            return value === "leapling";
         });
         expect(result).toBeTruthy();
     });
@@ -80,8 +80,8 @@ describe("Tree", () => {
     it("#any: return false if nothing passes the predicate", () => {
         t.insert(["labels", "exploding in sound"], "leapling");
         t.insert(["labels", "relapse"], "cloakroom");
-        const result = t.any(node => {
-            return node.value === "this shouldn't be found";
+        const result = t.any(value => {
+            return value === "this shouldn't be found";
         });
         expect(result).toBeFalsy();
     });
@@ -99,8 +99,8 @@ describe("Tree", () => {
         t.insert(["cities", "seattle"], "washington");
         t.insert(["unrelated", "branch"], "should not be included");
 
-        const newYorkTree = t.filter(node => {
-            return node.value === "new york";
+        const newYorkTree = t.filter(value => {
+            return value === "new york";
         });
 
         expect(newYorkTree.find(["bands", "stove"])).toBeDefined();
