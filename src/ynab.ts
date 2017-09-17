@@ -138,5 +138,11 @@ export const ynab = new App({
 
             $.mousedown(downArrow).mousedown(toBeBudgeted).click(okButton);
         },
+        blurInput: (_, event) => {
+            const input = event.srcElement as HTMLInputElement | undefined;
+            if (input && input.blur) {
+                input.blur();
+            }
+        },
     },
 });
