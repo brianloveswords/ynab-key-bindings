@@ -31,39 +31,48 @@ ynab
     })
     .addBinding({
         keys: "g 1",
-        command: { name: "goToAccount", args: [1] },
+        command: "goToAccount",
+        args: [1],
     })
     .addBinding({
         keys: "g 2",
-        command: { name: "goToAccount", args: [2] },
+        command: "goToAccount",
+        args: [2],
     })
     .addBinding({
         keys: "g 3",
-        command: { name: "goToAccount", args: [3] },
+        command: "goToAccount",
+        args: [3],
     })
     .addBinding({
         keys: "g 4",
-        command: { name: "goToAccount", args: [4] },
+        command: "goToAccount",
+        args: [4],
     })
     .addBinding({
         keys: "g 5",
-        command: { name: "goToAccount", args: [5] },
+        command: "goToAccount",
+        args: [5],
     })
     .addBinding({
         keys: "g 6",
-        command: { name: "goToAccount", args: [6] },
+        command: "goToAccount",
+        args: [6],
     })
     .addBinding({
         keys: "g 7",
-        command: { name: "goToAccount", args: [7] },
+        command: "goToAccount",
+        args: [7],
     })
     .addBinding({
         keys: "g 8",
-        command: { name: "goToAccount", args: [8] },
+        command: "goToAccount",
+        args: [8],
     })
     .addBinding({
         keys: "g 9",
-        command: { name: "goToAccount", args: [9] },
+        command: "goToAccount",
+        args: [9],
     });
 
 // const receiver = new CommandReceiver([

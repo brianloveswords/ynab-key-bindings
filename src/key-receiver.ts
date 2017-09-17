@@ -90,9 +90,9 @@ export class KeyReceiver {
             return false;
         }
 
-        const action = maybeResult.binding.command;
-        debug("found action:", action);
-        this.app.invokeCommand(action);
+        const binding = maybeResult.binding;
+        debug("found binding:", binding);
+        this.app.invokeBinding(binding, event);
 
         this.clearChain();
 

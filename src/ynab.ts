@@ -1,24 +1,18 @@
 import { App } from "./app";
-import { DOMWrapper } from "./dom-wrapper";
 
-const $ = new DOMWrapper(document.body);
 export const ynab = new App({
-    root: $,
+    rootElement: document.body,
     modes: {
-        "modal-open": () => $.exists(".modal-popup"),
-        "account-view": () => $.exists(".accounts-header"),
-        "budget-view": () => $.exists(".budget-header"),
-        "reports-view": () => $.exists(".reports-header"),
+        "modal-open": $ => $.exists(".modal-popup"),
+        "account-view": $ => $.exists(".accounts-header"),
+        "budget-view": $ => $.exists(".budget-header"),
+        "reports-view": $ => $.exists(".reports-header"),
         "input-mode": App.isInputMode,
     },
     commands: {
-        addTransaction() {
-            $.click(".add-transaction");
-        },
-        activateSearch() {
-            $.focus(".transaction-search-input");
-        },
-        goToAccount(acctNumber: number) {
+        addTransaction: $ => $.click(".add-transaction"),
+        activateSearch: $ => $.focus(".transaction-search-input"),
+        goToAccount: ($, _, acctNumber: number) => {
             const accounts = $.selectAll(".nav-account-row");
             const account = accounts[acctNumber - 1] as HTMLAnchorElement;
 
@@ -26,34 +20,17 @@ export const ynab = new App({
                 account.click();
             }
         },
-        goToBudget() {
-            $.click(".navlink-budget a");
-        },
-        goToAllAccounts() {
-            $.click(".navlink-accounts a");
-        },
-        nextMonth() {
-            $.click(".budget-header-calendar-next");
-        },
-        previousMonth() {
-            $.click(".budget-header-calendar-prev");
-        },
-        collapseAll() {
-            $.clickAll(".budget-table-cell-name .flaticon.down");
-        },
-        expandAll() {
-            $.clickAll(".budget-table-cell-name .flaticon.right");
-        },
-        clearSelection() {
-            $.click(".budget-table .budget-table-cell-name");
-        },
-        importTranactions() {
-            $.click(".accounts-toolbar-import-transactions");
-        },
-        reconcileAccount() {
-            $.click(".accounts-header-reconcile");
-        },
-        deselectAll() {
+        goToBudget: $ => $.click(".navlink-budget a"),
+        goToAllAccounts: $ => $.click(".navlink-accounts a"),
+        nextMonth: $ => $.click(".budget-header-calendar-next"),
+        previousMonth: $ => $.click(".budget-header-calendar-prev"),
+        collapseAll: $ => $.clickAll(".budget-table-cell-name .flaticon.down"),
+        expandAll: $ => $.clickAll(".budget-table-cell-name .flaticon.right"),
+        clearSelection: $ => $.click(".budget-table .budget-table-cell-name"),
+        importTranactions: $ =>
+            $.click(".accounts-toolbar-import-transactions"),
+        reconcileAccount: $ => $.click(".accounts-header-reconcile"),
+        deselectAll: $ => {
             const cancelSearch = ".transaction-search-cancel-icon";
             const budgetSelectAll =
                 ".budget-table-header .root-checkbox-button-square";
@@ -71,7 +48,7 @@ export const ynab = new App({
                 return;
             }
         },
-        toggleReconciledTransations() {
+        toggleReconciledTransations: $ => {
             const dateSelector = ".accounts-toolbar-all-dates";
             // yeah, "fitlers". that's what's in the css.
             const checkboxSelector =
@@ -79,7 +56,7 @@ export const ynab = new App({
             const okayButton = ".modal-account-filters .button-primary";
             $.click(dateSelector).click(checkboxSelector).click(okayButton);
         },
-        emptySelectedBudgets() {
+        emptySelectedBudgets: $ => {
             const allSelected = $.selectAll(
                 ".is-checked .budget-table-cell-available",
             );
@@ -105,7 +82,7 @@ export const ynab = new App({
                 okButton.click();
             });
         },
-        showOverspent() {
+        showOverspent: $ => {
             let selector = ".is-checked ~ * .cautious";
 
             if (!$.exists(selector)) {
@@ -123,7 +100,7 @@ export const ynab = new App({
             }
             row.click();
         },
-        contextualFix() {
+        contextualFix: $ => {
             const checked = ".is-sub-category.is-checked";
             const quickBudget =
                 ".inspector-quick-budget > .budget-inspector-button";

@@ -1,14 +1,12 @@
 import { Tree } from "./tree";
 
-export type Command<CommandName> =
-    | CommandName
-    | { name: CommandName; args: any[] };
-
 export interface KeyBinding<ModeName = string, CommandName = string> {
     keys: string;
+    command: CommandName;
     modes?: ModeName[];
     except?: ModeName[];
-    command: Command<CommandName>;
+    args?: any[];
+    context?: object;
 }
 
 type Keys = string[];
