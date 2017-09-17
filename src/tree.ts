@@ -108,18 +108,14 @@ export class Tree<K, V> {
         })(this, new Tree());
     }
 
-    public reduceAll<A>(
-        fn: (accum: A, node: TreeNode<K, V>) => A,
-        accum: A,
-    ): A {
-        return (function reducer(tree: Tree<K, V>) {
+    public forEach<A>(fn: (node: TreeNode<K, V>) => A): void {
+        return (function interator(tree: Tree<K, V>) {
             for (const [_, node] of tree.internalTree) {
-                accum = fn(accum, node);
+                fn(node);
                 if (tree.isBranch(node)) {
-                    accum = reducer(node.children);
+                    interator(node.children);
                 }
             }
-            return accum;
         })(this);
     }
 
@@ -127,12 +123,12 @@ export class Tree<K, V> {
         fn: (accum: A, value: V, node: Leaf<K, V>) => A,
         accum: A,
     ) {
-        return this.reduceAll((innerAccum, node) => {
+        this.forEach(node => {
             if (this.isLeaf(node)) {
-                innerAccum = fn(innerAccum, node.value, node);
+                accum = fn(accum, node.value, node);
             }
-            return innerAccum;
-        }, accum);
+        });
+        return accum;
     }
 
     public isBranch(node: Maybe<TreeNode<K, V>>): node is Branch<K, V> {
