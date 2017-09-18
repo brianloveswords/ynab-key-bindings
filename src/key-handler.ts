@@ -1,5 +1,11 @@
 import { isIntersection } from "./kitchen-sink";
-import { KeyBindings, KeyBindingBranch, KeyBinding, Key } from "./key-bindings";
+import {
+    KeyBindings,
+    KeyBindingBranch,
+    KeyBinding,
+    Key,
+    SimpleKey,
+} from "./key-bindings";
 
 interface DispatchKeyMiss {
     type: "miss";
@@ -40,6 +46,19 @@ type DispatchKeyResult =
     | DispatchKeyMatch;
 
 export class KeyHandler {
+    public static keyIsModified(key: Key): boolean {
+        if (typeof key === "string") {
+            return false;
+        }
+        return key.modifiers.length > 0;
+    }
+    public static getUnmodifiedKey(key: Key): SimpleKey {
+        if (typeof key === "string") {
+            return key;
+        }
+        return key.key;
+    }
+
     public keySequence: Key[];
     public currentModes: string[];
     constructor(public bindings: KeyBindings) {
@@ -52,6 +71,12 @@ export class KeyHandler {
         this.currentModes = modes;
         const result = this.bindings.find(modes, this.keySequence);
         if (!result) {
+            if (KeyHandler.keyIsModified(key)) {
+                const unmodified = KeyHandler.getUnmodifiedKey(key);
+                this.keySequence.pop();
+                return this.dispatchKey(unmodified, modes);
+            }
+
             const missedSequence = this.clearSequence();
             return {
                 type: "miss",

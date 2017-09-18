@@ -3,13 +3,14 @@ import {
     KeyBindings,
     KeyBinding,
     PartialKeyBinding,
+    DetailedKey,
 } from "../src/key-bindings";
 
 describe("KeyHandler", () => {
     const kb = new KeyBindings()
         .add({
             command: "very sleep",
-            keys: "Control+b Meta+e Command+d",
+            keys: "Control+b Meta+e Meta+d",
         })
         .add({
             command: "sleep",
@@ -189,14 +190,35 @@ describe("KeyHandler", () => {
         });
 
         it("knows what to do with modifier keys", () => {
-            // keys: "Control+b Meta+e Command+d",
-            const sequence = [
+            // keys: "Control+b Meta+e Meta+d",
+            const sequence: DetailedKey[] = [
                 { key: "Control", modifiers: [] },
                 { key: "b", modifiers: ["Control"] },
                 { key: "Meta", modifiers: [] },
                 { key: "e", modifiers: ["Meta"] },
-                { key: "Command", modifiers: [] },
-                { key: "d", modifiers: ["Command"] },
+                { key: "Meta", modifiers: [] },
+                { key: "d", modifiers: ["Meta"] },
+            ];
+            const results = sequence.map(k => kh.dispatchKey(k, [""]));
+            const result = results.pop();
+
+            if (result.type !== "match") {
+                throw new Error("result should be a match");
+            }
+        });
+
+        it.only("will fall back to a sequence if a chord isn't found", () => {
+            kh = new KeyHandler(
+                new KeyBindings().add({
+                    command: "lazy typer",
+                    keys: "Control s",
+                }),
+            );
+
+            // keys: "Control+b Meta+e Meta+d",
+            const sequence: DetailedKey[] = [
+                { key: "Control", modifiers: [] },
+                { key: "s", modifiers: ["Control"] },
             ];
             const results = sequence.map(k => kh.dispatchKey(k, [""]));
             const result = results.pop();
