@@ -2,6 +2,7 @@ import {
     KeyBindings,
     KeyBinding,
     PartialKeyBinding,
+    DetailedKey,
 } from "../src/key-bindings";
 
 describe("KeyBindings", () => {
@@ -147,17 +148,17 @@ describe("KeyBindings", () => {
         it("knows how to handle modifier keys", () => {
             kb.add({
                 command: "test",
-                keys: "Control+Alt+Delete s Command+7",
+                keys: "Control+Alt+Delete s Meta+7",
                 modes: ["a-mode"],
             });
 
-            const deleteKey = {
+            const deleteKey: DetailedKey = {
                 key: "Delete",
                 modifiers: ["Control", "Alt"],
             };
-            const sevenKey = {
+            const sevenKey: DetailedKey = {
                 key: "7",
-                modifiers: ["Command"],
+                modifiers: ["Meta"],
             };
 
             const sequence = [
@@ -165,7 +166,7 @@ describe("KeyBindings", () => {
                 "Alt",
                 deleteKey,
                 "s",
-                "Command",
+                "Meta",
                 sevenKey,
             ];
 
@@ -181,7 +182,16 @@ describe("KeyBindings", () => {
 
             expect(found.leaf.value.command).toBe("test");
         });
-    });
 
-    // it("#modeFilter");
+        it("omits excluded modes if they are explicitly included", () => {
+            kb.add({
+                command: "test",
+                keys: "a",
+                modes: ["a-mode"],
+                except: ["a-mode"],
+            });
+            const found = kb.find(["a-mode"], ["a"]);
+            expect(found).toBeDefined();
+        });
+    });
 });

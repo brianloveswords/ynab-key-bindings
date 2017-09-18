@@ -23,6 +23,7 @@ interface DispatchKeyMatch {
 
 interface PendingCommand {
     command: string;
+    args: any[];
     remaining: string[];
 }
 
@@ -39,11 +40,12 @@ type DispatchKeyResult =
     | DispatchKeyMatch;
 
 export class KeyHandler {
-    constructor(
-        public bindings: KeyBindings,
-        public keySequence: Key[] = [],
-        public currentModes: string[] = [],
-    ) { }
+    public keySequence: Key[];
+    public currentModes: string[];
+    constructor(public bindings: KeyBindings) {
+        this.keySequence = [];
+        this.currentModes = [];
+    }
 
     public dispatchKey(key: Key, modes: string[]): DispatchKeyResult {
         this.keySequence.push(key);
@@ -141,11 +143,13 @@ export class KeyHandler {
                 // full path as an argument.
                 const path = tree.getNodePath(leaf);
                 const command = leaf.value.command;
+                const args = leaf.value.args;
                 const remaining = path.slice(sequence.length);
 
                 list.push({
                     remaining,
                     command,
+                    args,
                 });
             });
 

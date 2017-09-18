@@ -1,4 +1,4 @@
-import { isEmpty, isIntersection } from "./kitchen-sink";
+import { isEmpty, isIntersection, arrayDifference } from "./kitchen-sink";
 import { Tree, Leaf, Branch } from "./tree";
 
 export interface KeyBinding<ModeName = string, CommandName = string> {
@@ -98,7 +98,10 @@ export class KeyBindings {
             }
 
             if (Tree.isLeaf(item)) {
-                const excludeModes = item.value.except;
+                const excludeModes = arrayDifference(
+                    item.value.except,
+                    item.value.modes,
+                );
 
                 if (isIntersection(excludeModes, activeModes)) {
                     return;
