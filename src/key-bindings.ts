@@ -42,6 +42,7 @@ export class KeyBindings {
     constructor() {
         this.modeMap = new Map();
         this.globalBindings = new Tree();
+        this.defaultExceptions = [];
     }
 
     public add(partialBinding: PartialKeyBinding) {
@@ -88,6 +89,7 @@ export class KeyBindings {
 
             if (Tree.isLeaf(item)) {
                 const excludeModes = item.value.except;
+
                 if (isIntersection(excludeModes, activeModes)) {
                     return;
                 }
