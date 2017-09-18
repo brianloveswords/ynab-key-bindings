@@ -36,13 +36,8 @@ interface BindingResult {
 }
 
 type KeyBindingTree = Tree<string, KeyBinding>;
-type KeyBindingNode = TreeNode<string, KeyBinding>;
 type KeyBindingLeaf = Leaf<string, KeyBinding>;
 type KeyBindingBranch = Branch<string, KeyBinding>;
-
-type KeyBindingsInit = {
-    modes: string[];
-};
 
 type LeafResult = {
     type: "leaf";
@@ -60,23 +55,17 @@ export class KeyBindings {
     private modeMap: Map<string, KeyBindingTree>;
     private globalMap: Map<string, KeyBindingTree>;
     public defaultExceptions = [];
-    constructor(init: KeyBindingsInit) {
+    constructor() {
         this.modeMap = new Map();
         this.globalMap = new Map();
-        init.modes.forEach(mode => this.modeMap.set(mode, new Tree()));
     }
 
     public add(binding: KeyBinding) {
         const path = binding.keys.split(/\s+/);
         const modes = binding.modes;
 
-        // if (isEmpty(modes)) {
-        //     // global, add to every mode map
-
-        // }
-
         modes.forEach(mode => {
-            const map = this.getModeMap(mode);
+            const map = this.findOrCreateMode(mode);
             map.insert(path, binding);
         });
 
@@ -94,56 +83,32 @@ export class KeyBindings {
         };
     }
 
+    // public modeFilter(activeModes: string[]): KeyBindings {
+    //     return new KeyBindings(
+    //         this.bindings.filter(binding => {
+    //             const includedModes = binding.modes;
+
+    //             // keep only excluded modes that haven't been explicitly
+    //             // specified in the included mode list
+    //             const excludedModes = arrayDifference(
+    //                 binding.except,
+    //                 includedModes,
+    //             );
+
+    //             const included = isEmpty(includedModes)
+    //                 ? true
+    //                 : isIntersection(includedModes, activeModes);
+
+    //             const excluded = isEmpty(excludedModes)
+    //                 ? false
+    //                 : isIntersection(excludedModes, activeModes);
+
+    //             return included && !excluded;
+    //         }),
+    //     );
+    // }
+
     public find(
-        activeModes: string[],
-        keys: Keys,
-    ): LeafResult | BranchesResult | undefined {
-        return this.getLeafOrBranches(activeModes, keys);
-
-        // const maybeBinding = tree.find(keys);
-
-        // if (!maybeBinding) {
-        //     return undefined;
-        // }
-
-        // if (tree.isLeaf(maybeBinding)) {
-        //     return {
-        //         type: "binding",
-        //         binding: maybeBinding.value,
-        //     };
-        // }
-
-        // return {
-        //     type: "prefix",
-        // };
-    }
-
-    public modeFilter(activeModes: string[]): KeyBindings {
-        return new KeyBindings(
-            this.bindings.filter(binding => {
-                const includedModes = binding.modes;
-
-                // keep only excluded modes that haven't been explicitly
-                // specified in the included mode list
-                const excludedModes = arrayDifference(
-                    binding.except,
-                    includedModes,
-                );
-
-                const included = isEmpty(includedModes)
-                    ? true
-                    : isIntersection(includedModes, activeModes);
-
-                const excluded = isEmpty(excludedModes)
-                    ? false
-                    : isIntersection(excludedModes, activeModes);
-
-                return included && !excluded;
-            }),
-        );
-    }
-
-    private getLeafOrBranches(
         activeModes: string[],
         keys: Keys,
     ): LeafResult | BranchesResult | undefined {
@@ -151,6 +116,7 @@ export class KeyBindings {
 
         activeModes.forEach(mode => {
             const map = this.modeMap.get(mode);
+
             if (!map) {
                 return;
             }
@@ -180,44 +146,41 @@ export class KeyBindings {
 
             if (result.type === "branch") {
                 if (item.type === "leaf") {
-                    throw new Error(
-                        `cannot reach bindings for key sequence
-                        '${keys}' in modes '${result.modes}' because
-                        command '${item.value.command}' from mode
-                        '${mode}' is in the way.`,
-                    );
+                    // prettier-ignore
+                    const err = new Error(`cannot reach bindings for key sequence '${keys}' in modes '${result.modes}' because command '${item.value.command}' from mode '${mode}' is in the way.`);
+                    err.name = "UnreachableBinding";
+                    throw err;
                 }
                 result.branches.push(item);
                 result.modes.push(mode);
-            }
+            } else {
+                // we're dealing with a leaf and we shouldn't ever
+                // find more than one leaf.
 
-            if (result.type === "leaf" && item.type === "branch") {
-                throw new Error(
-                    `cannot reach bindings for key sequence '${keys}' in
-                    mode '${mode}' because command
-                    '${result.leaf.value.command}' from mode
-                    '${result.mode}' is in the way.`,
-                );
-            }
-
-            if (result.type === "leaf" && item.type === "leaf") {
-                throw new Error(
-                    `command '${item.value.command}' with key sequence
-                    '${keys}' in mode '${mode}' is being shadowed by
-                    '${result.leaf.value.command}' in mode
-                    '${result.mode}'`,
-                );
+                if (item.type === "branch") {
+                    // prettier-ignore
+                    const err = new Error(`cannot reach bindings for key sequence '${keys}' in mode '${mode}' because command '${result.leaf.value.command}' from mode '${result.mode}' is in the way.`);
+                    err.name = "UnreachableBinding";
+                    throw err;
+                } else {
+                    // prettier-ignore
+                    const err = new Error(`command '${item.value.command}' with key sequence '${keys}' in mode '${mode}' is being shadowed by '${result.leaf.value.command}' in mode '${result.mode}'`);
+                    err.name = "ConflictingBinding";
+                    throw err;
+                }
             }
         });
 
         return result;
     }
 
-    private getModeMap(name: string) {
+    private findOrCreateMode(name: string) {
         const map = this.modeMap.get(name);
-        if (!map) {
-            throw new Error(`could not find mode map '${name}'`);
+        if (map) {
+            return map;
         }
-        return map;
+        const newMap: KeyBindingTree = new Tree();
+        this.modeMap.set(name, newMap);
+        return newMap;
     }
 }
