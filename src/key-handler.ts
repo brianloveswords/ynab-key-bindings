@@ -5,6 +5,8 @@ import {
     KeyBinding,
     Key,
     SimpleKey,
+    DetailedKey,
+    Modifier,
 } from "./key-bindings";
 
 interface DispatchKeyMiss {
@@ -46,7 +48,7 @@ type DispatchKeyResult =
     | DispatchKeyMatch;
 
 export class KeyHandler {
-    public static keyIsModified(key: Key): boolean {
+    public static keyIsModified(key: Key): key is DetailedKey {
         if (typeof key === "string") {
             return false;
         }
@@ -61,9 +63,11 @@ export class KeyHandler {
 
     public keySequence: Key[];
     public currentModes: string[];
+    public storedModifiers: Modifier[];
     constructor(public bindings: KeyBindings) {
         this.keySequence = [];
         this.currentModes = [];
+        this.storedModifiers = [];
     }
 
     public dispatchKey(key: Key, modes: string[]): DispatchKeyResult {
@@ -73,6 +77,7 @@ export class KeyHandler {
         if (!result) {
             if (KeyHandler.keyIsModified(key)) {
                 const unmodified = KeyHandler.getUnmodifiedKey(key);
+                this.storedModifiers.push(...key.modifiers);
                 this.keySequence.pop();
                 return this.dispatchKey(unmodified, modes);
             }
@@ -95,7 +100,24 @@ export class KeyHandler {
                 modes,
             };
         }
+
+        const storedModifiers = this.storedModifiers;
         const capturedSequence = this.clearSequence();
+        const binding = result.leaf.value;
+        const path = KeyBindings.determineInsertPath(binding);
+        for (const modifier of storedModifiers) {
+            const index = path.indexOf(modifier);
+            if (index === -1) {
+                const missedSequence = this.clearSequence();
+                return {
+                    type: "miss",
+                    sequence: missedSequence,
+                    modes,
+                };
+            }
+            path[index] = "";
+        }
+
         return {
             type: "match",
             match: result.leaf.value,
@@ -126,6 +148,7 @@ export class KeyHandler {
 
     public clearSequence(): Key[] {
         const oldSequence = this.keySequence;
+        this.storedModifiers = [];
         this.keySequence = [];
         return oldSequence;
     }

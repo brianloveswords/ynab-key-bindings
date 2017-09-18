@@ -46,6 +46,46 @@ interface BranchesResult {
 }
 
 export class KeyBindings {
+    public static keysToPath(keys: Key[]): string[] {
+        return keys.map(key => {
+            if (typeof key === "string") {
+                return key;
+            }
+            return [...key.modifiers, key.key].join("+");
+        });
+    }
+
+    public static determineBindingType(keys: string): KeyBinding["type"] {
+        if (/(\w+)\+(\w+)/.test(keys)) {
+            return "chord";
+        }
+        return "sequence";
+    }
+    public static determineInsertPath(binding: KeyBinding): string[] {
+        if (binding.type === "sequence") {
+            return binding.keys.split(/\s+/);
+        }
+        // we want to turn `Control+c Control+Meta+n` into
+        // [Control, Control+c, Control, Meta, Control+Meta+n]
+        const path: string[] = [];
+
+        // [Control+C, Control+Meta+N]
+        const chords = binding.keys.split(/\s+/);
+
+        chords.forEach(chord => {
+            // [Control, C] | [Control, Meta, N]
+            const parts = chord.split("+");
+            if (parts.length === 1) {
+                path.push(chord);
+                return;
+            }
+            const modifiers = parts.slice(0, -1);
+            path.push(...modifiers, chord);
+        });
+
+        return path;
+    }
+
     public defaultExceptions: string[];
     private modeMap: Map<string, KeyBindingTree>;
     private globalBindings: KeyBindingTree;
@@ -57,7 +97,7 @@ export class KeyBindings {
 
     public add(partialBinding: PartialKeyBinding): this {
         const binding = this.createBinding(partialBinding);
-        const path = this.determineInsertPath(binding);
+        const path = KeyBindings.determineInsertPath(binding);
         const modes = binding.modes;
 
         if (isEmpty(modes)) {
@@ -74,7 +114,7 @@ export class KeyBindings {
 
     public createBinding(binding: PartialKeyBinding): KeyBinding {
         const exceptions = this.defaultExceptions;
-        const bindingType = this.determineBindingType(binding.keys);
+        const bindingType = KeyBindings.determineBindingType(binding.keys);
         return {
             keys: binding.keys,
             command: binding.command,
@@ -87,7 +127,7 @@ export class KeyBindings {
 
     public find(activeModes: string[], keys: Key[]): FindResult {
         let result: FindResult;
-        const path = this.keysToPath(keys);
+        const path = KeyBindings.keysToPath(keys);
 
         // tslint:disable-next-line:cyclomatic-complexity
         const innerFind = (mode: string, map: KeyBindingTree) => {
@@ -164,47 +204,6 @@ export class KeyBindings {
         });
         innerFind("*global*", this.globalBindings);
         return result;
-    }
-
-    private determineBindingType(keys: string): KeyBinding["type"] {
-        if (/(\w+)\+(\w+)/.test(keys)) {
-            return "chord";
-        }
-        return "sequence";
-    }
-
-    private determineInsertPath(binding: KeyBinding): string[] {
-        if (binding.type === "sequence") {
-            return binding.keys.split(/\s+/);
-        }
-        // we want to turn `Control+c Control+Meta+n` into
-        // [Control, Control+c, Control, Meta, Control+Meta+n]
-        const path: string[] = [];
-
-        // [Control+C, Control+Meta+N]
-        const chords = binding.keys.split(/\s+/);
-
-        chords.forEach(chord => {
-            // [Control, C] | [Control, Meta, N]
-            const parts = chord.split("+");
-            if (parts.length === 1) {
-                path.push(chord);
-                return;
-            }
-            const modifiers = parts.slice(0, -1);
-            path.push(...modifiers, chord);
-        });
-
-        return path;
-    }
-
-    private keysToPath(keys: Key[]): string[] {
-        return keys.map(key => {
-            if (typeof key === "string") {
-                return key;
-            }
-            return [...key.modifiers, key.key].join("+");
-        });
     }
 
     private findOrCreateMode(name: string): KeyBindingTree {
