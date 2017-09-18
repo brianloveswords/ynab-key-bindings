@@ -1,22 +1,22 @@
 import { isIntersection } from "./kitchen-sink";
-import { KeyBindings, KeyBindingBranch, KeyBinding } from "./key-bindings";
+import { KeyBindings, KeyBindingBranch, KeyBinding, Key } from "./key-bindings";
 
 interface DispatchKeyMiss {
     type: "miss";
-    sequence: string[];
+    sequence: Key[];
     modes: string[];
 }
 
 interface DispatchKeyPending {
     type: "pending";
-    sequence: string[];
+    sequence: Key[];
     modes: string[];
     pending: PendingCommand[];
 }
 
 interface DispatchKeyMatch {
     type: "match";
-    sequence: string[];
+    sequence: Key[];
     modes: string[];
     match: KeyBinding;
 }
@@ -30,7 +30,7 @@ interface ModeChangeResult {
     reset: boolean;
     oldModes: string[];
     newModes: string[];
-    sequence: string[];
+    sequence: Key[];
 }
 
 type DispatchKeyResult =
@@ -41,11 +41,11 @@ type DispatchKeyResult =
 export class KeyHandler {
     constructor(
         public bindings: KeyBindings,
-        public keySequence: string[] = [],
+        public keySequence: Key[] = [],
         public currentModes: string[] = [],
     ) { }
 
-    public dispatchKey(key: string, modes: string[]): DispatchKeyResult {
+    public dispatchKey(key: Key, modes: string[]): DispatchKeyResult {
         this.keySequence.push(key);
         this.currentModes = modes;
         const result = this.bindings.find(modes, this.keySequence);
@@ -97,7 +97,7 @@ export class KeyHandler {
         };
     }
 
-    public clearSequence(): string[] {
+    public clearSequence(): Key[] {
         const oldSequence = this.keySequence;
         this.keySequence = [];
         return oldSequence;
@@ -105,7 +105,7 @@ export class KeyHandler {
 
     private collapseBranches(
         branches: KeyBindingBranch[],
-        sequence: string[],
+        sequence: Key[],
     ): PendingCommand[] {
         return branches.reduce((list, branch) => {
             const tree = branch.children;

@@ -8,6 +8,10 @@ import {
 describe("KeyHandler", () => {
     const kb = new KeyBindings()
         .add({
+            command: "very sleep",
+            keys: "Control+b Meta+e Command+d",
+        })
+        .add({
             command: "sleep",
             keys: "b e d",
             args: ["dragonaut"],
@@ -155,6 +159,24 @@ describe("KeyHandler", () => {
             const dispatchResult = kh.dispatchKey("s", ["bands", "tea"]);
 
             if (dispatchResult.type !== "match") {
+                throw new Error("result should be a match");
+            }
+        });
+
+        it("knows what to do with modifier keys", () => {
+            // keys: "Control+b Meta+e Command+d",
+            const sequence = [
+                { key: "Control", modifiers: [] },
+                { key: "b", modifiers: ["Control"] },
+                { key: "Meta", modifiers: [] },
+                { key: "e", modifiers: ["Meta"] },
+                { key: "Command", modifiers: [] },
+                { key: "d", modifiers: ["Command"] },
+            ];
+            const results = sequence.map(k => kh.dispatchKey(k, [""]));
+            const result = results.pop();
+
+            if (result.type !== "match") {
                 throw new Error("result should be a match");
             }
         });

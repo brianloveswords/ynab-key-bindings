@@ -21,9 +21,9 @@ export interface PartialKeyBinding<ModeName = string, CommandName = string> {
 
 type Keys = Key[];
 type Modifier = string;
-type Key = SimpleKey | DetailedKey;
-type SimpleKey = string;
-interface DetailedKey {
+export type Key = SimpleKey | DetailedKey;
+export type SimpleKey = string;
+export interface DetailedKey {
     key: SimpleKey;
     modifiers: Modifier[];
 }
