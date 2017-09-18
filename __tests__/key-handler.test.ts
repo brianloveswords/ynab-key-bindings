@@ -10,6 +10,7 @@ describe("KeyHandler", () => {
         .add({
             command: "sleep",
             keys: "b e d",
+            args: ["dragonaut"],
         })
         .add({
             command: "underworld",
@@ -57,13 +58,105 @@ describe("KeyHandler", () => {
                 throw new Error("result should be pending");
             }
             expect(result.sequence).toMatchObject(["b"]);
-
-            console.log(result.pending);
-
             expect(result.pending.length).toBe(4);
+
+            const commands = result.pending.map(p => p.command);
+            expect(commands).toContain("stove");
+            expect(commands).toContain("hum");
+            expect(commands).toContain("underworld");
+            expect(commands).toContain("sleep");
         });
-        it("keeps track of the sequence when it continues to match");
-        it("empties sequence when a complete match is found");
-        it("empties sequence when there's a miss");
+        it("keeps track of the sequence when it continues to match", () => {
+            kh.dispatchKey("b", ["bands"]);
+            const result = kh.dispatchKey("!", ["bands"]);
+            expect(kh.keySequence.length).toBe(2);
+            if (result.type !== "pending") {
+                throw new Error("result should be pending");
+            }
+            expect(result.sequence).toMatchObject(["b", "!"]);
+            expect(result.pending.length).toBe(2);
+
+            const commands = result.pending.map(p => p.command);
+            expect(commands).toContain("stove");
+            expect(commands).toContain("hum");
+        });
+
+        it("empties sequence when a complete match is found", () => {
+            kh.dispatchKey("b", ["bands"]);
+            kh.dispatchKey("e", ["bands"]);
+            const result = kh.dispatchKey("d", ["bands"]);
+
+            if (result.type !== "match") {
+                throw new Error("result should be a match");
+            }
+
+            expect(kh.keySequence.length).toBe(0);
+
+            expect(result.sequence).toMatchObject(["b", "e", "d"]);
+            expect(result.match.command).toBe("sleep");
+            expect(result.match.args).toMatchObject(["dragonaut"]);
+        });
+
+        it("empties sequence when there's a miss", () => {
+            kh.dispatchKey("b", ["bands"]);
+            kh.dispatchKey("e", ["bands"]);
+            expect(kh.keySequence.length).toBe(2);
+            const result = kh.dispatchKey("MISS", ["bands"]);
+
+            if (result.type !== "miss") {
+                throw new Error("result should be a miss");
+            }
+
+            expect(kh.keySequence.length).toBe(0);
+        });
+
+        it("does not carry sequence if mode gets lost", () => {
+            kh.dispatchKey("b", ["bands"]);
+            kh.dispatchKey("!", ["bands"]);
+            expect(kh.keySequence.length).toBe(2);
+            const result = kh.dispatchKey("s", ["tea"]);
+
+            if (result.type !== "miss") {
+                throw new Error("result should be a miss");
+            }
+        });
+
+        it("drops sequence when notified about mode change that doesn't include mode", () => {
+            kh.dispatchKey("b", ["bands"]);
+            kh.dispatchKey("!", ["bands"]);
+
+            const modeChangeResult = kh.modeChange(["tea"]);
+            expect(modeChangeResult).toMatchObject({
+                reset: true,
+                oldModes: ["bands"],
+                newModes: ["tea"],
+                sequence: ["b", "!"],
+            });
+
+            const dispatchResult = kh.dispatchKey("t", ["tea"]);
+
+            if (dispatchResult.type !== "pending") {
+                throw new Error("result should be pending");
+            }
+        });
+
+        it("does not drop sequence when change is overlapping", () => {
+            kh.dispatchKey("b", ["bands"]);
+            kh.dispatchKey("!", ["bands"]);
+
+            const modeChangeResult = kh.modeChange(["bands", "tea"]);
+            expect(modeChangeResult).toMatchObject({
+                reset: false,
+                oldModes: ["bands"],
+                newModes: ["bands", "tea"],
+                sequence: ["b", "!"],
+            });
+
+            const dispatchResult = kh.dispatchKey("s", ["bands", "tea"]);
+
+            if (dispatchResult.type !== "match") {
+                throw new Error("result should be a match");
+            }
+        });
     });
 });

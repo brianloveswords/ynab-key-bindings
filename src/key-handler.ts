@@ -1,4 +1,5 @@
-import { KeyBindings, FindResult, KeyBindingBranch } from "./key-bindings";
+import { isIntersection } from "./kitchen-sink";
+import { KeyBindings, KeyBindingBranch, KeyBinding } from "./key-bindings";
 
 interface DispatchKeyMiss {
     type: "miss";
@@ -10,7 +11,14 @@ interface DispatchKeyPending {
     type: "pending";
     sequence: string[];
     modes: string[];
-    pending: any[];
+    pending: PendingCommand[];
+}
+
+interface DispatchKeyMatch {
+    type: "match";
+    sequence: string[];
+    modes: string[];
+    match: KeyBinding;
 }
 
 interface PendingCommand {
@@ -18,16 +26,28 @@ interface PendingCommand {
     remaining: string[];
 }
 
-type DispatchKeyResult = DispatchKeyMiss | DispatchKeyPending;
+interface ModeChangeResult {
+    reset: boolean;
+    oldModes: string[];
+    newModes: string[];
+    sequence: string[];
+}
+
+type DispatchKeyResult =
+    | DispatchKeyMiss
+    | DispatchKeyPending
+    | DispatchKeyMatch;
 
 export class KeyHandler {
     constructor(
         public bindings: KeyBindings,
         public keySequence: string[] = [],
+        public currentModes: string[] = [],
     ) { }
 
     public dispatchKey(key: string, modes: string[]): DispatchKeyResult {
         this.keySequence.push(key);
+        this.currentModes = modes;
         const result = this.bindings.find(modes, this.keySequence);
         if (!result) {
             const missedSequence = this.clearSequence();
@@ -39,7 +59,7 @@ export class KeyHandler {
         }
 
         if (result.type === "branch") {
-            const sequence = this.keySequence;
+            const sequence = [...this.keySequence];
             const pending = this.collapseBranches(result.branches, sequence);
             return {
                 type: "pending",
@@ -48,6 +68,33 @@ export class KeyHandler {
                 modes,
             };
         }
+        const capturedSequence = this.clearSequence();
+        return {
+            type: "match",
+            match: result.leaf.value,
+            sequence: capturedSequence,
+            modes,
+        };
+    }
+
+    public modeChange(newModes: string[]): ModeChangeResult {
+        const oldModes = this.currentModes;
+        this.currentModes = newModes;
+
+        if (!isIntersection(oldModes, newModes)) {
+            return {
+                reset: true,
+                sequence: this.clearSequence(),
+                newModes,
+                oldModes,
+            };
+        }
+        return {
+            reset: false,
+            sequence: [...this.keySequence],
+            oldModes,
+            newModes,
+        };
     }
 
     public clearSequence(): string[] {
@@ -69,11 +116,11 @@ export class KeyHandler {
                 // full path as an argument.
                 const path = tree.getNodePath(leaf);
                 const command = leaf.value.command;
-                const keys = path.slice(sequence.length);
+                const remaining = path.slice(sequence.length);
 
                 list.push({
-                    command: command,
-                    remaining: keys,
+                    remaining,
+                    command,
                 });
             });
 
