@@ -53,21 +53,26 @@ type BranchesResult = {
 
 export class KeyBindings {
     private modeMap: Map<string, KeyBindingTree>;
-    private globalMap: Map<string, KeyBindingTree>;
+    private globalBindings: KeyBindingTree;
     public defaultExceptions = [];
     constructor() {
         this.modeMap = new Map();
-        this.globalMap = new Map();
+        this.globalBindings = new Tree();
     }
 
-    public add(binding: KeyBinding) {
+    public add(partialBinding: PartialKeyBinding) {
+        const binding = this.createBinding(partialBinding);
         const path = binding.keys.split(/\s+/);
         const modes = binding.modes;
 
-        modes.forEach(mode => {
-            const map = this.findOrCreateMode(mode);
-            map.insert(path, binding);
-        });
+        if (isEmpty(modes)) {
+            this.globalBindings.insert(path, binding);
+        } else {
+            modes.forEach(mode => {
+                const map = this.findOrCreateMode(mode);
+                map.insert(path, binding);
+            });
+        }
 
         return this;
     }
@@ -83,47 +88,23 @@ export class KeyBindings {
         };
     }
 
-    // public modeFilter(activeModes: string[]): KeyBindings {
-    //     return new KeyBindings(
-    //         this.bindings.filter(binding => {
-    //             const includedModes = binding.modes;
-
-    //             // keep only excluded modes that haven't been explicitly
-    //             // specified in the included mode list
-    //             const excludedModes = arrayDifference(
-    //                 binding.except,
-    //                 includedModes,
-    //             );
-
-    //             const included = isEmpty(includedModes)
-    //                 ? true
-    //                 : isIntersection(includedModes, activeModes);
-
-    //             const excluded = isEmpty(excludedModes)
-    //                 ? false
-    //                 : isIntersection(excludedModes, activeModes);
-
-    //             return included && !excluded;
-    //         }),
-    //     );
-    // }
-
     public find(
         activeModes: string[],
         keys: Keys,
     ): LeafResult | BranchesResult | undefined {
         let result: LeafResult | BranchesResult | undefined;
 
-        activeModes.forEach(mode => {
-            const map = this.modeMap.get(mode);
-
-            if (!map) {
-                return;
-            }
-
+        const innerFind = (mode: string, map: KeyBindingTree) => {
             const item = map.find(keys);
 
             if (!item) {
+                return;
+            }
+
+            if (
+                item.type === "leaf" &&
+                isIntersection(item.value.except, activeModes)
+            ) {
                 return;
             }
 
@@ -169,8 +150,16 @@ export class KeyBindings {
                     throw err;
                 }
             }
-        });
+        };
 
+        activeModes.forEach(mode => {
+            const map = this.modeMap.get(mode);
+            if (!map) {
+                return;
+            }
+            innerFind(mode, map);
+        });
+        innerFind("*global*", this.globalBindings);
         return result;
     }
 

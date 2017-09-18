@@ -16,8 +16,6 @@ describe("KeyBindings", () => {
                 command: "test",
                 keys: "Control Alt Delete",
                 modes: ["a-mode"],
-                args: [],
-                except: [],
             });
 
             const found = kb.find(["a-mode"], ["Control", "Alt", "Delete"]);
@@ -35,8 +33,6 @@ describe("KeyBindings", () => {
                 command: "test",
                 keys: "Control Alt Delete",
                 modes: ["a-mode"],
-                args: [],
-                except: [],
             });
             const found = kb.find(["b-mode"], ["Control", "Alt", "Delete"]);
             expect(found).toBeUndefined();
@@ -52,16 +48,12 @@ describe("KeyBindings", () => {
                 command: "conflict-a",
                 keys: "! conflict",
                 modes: ["a-mode"],
-                args: [],
-                except: [],
             });
 
             kb.add({
                 command: "conflict-b",
                 keys: "! conflict",
                 modes: ["b-mode"],
-                args: [],
-                except: [],
             });
 
             try {
@@ -76,16 +68,12 @@ describe("KeyBindings", () => {
                 command: "conflict-a",
                 keys: "! conflict",
                 modes: ["a-mode"],
-                args: [],
-                except: [],
             });
 
             kb.add({
                 command: "conflict-c",
                 keys: "! conflict deep",
                 modes: ["c-mode"],
-                args: [],
-                except: [],
             });
 
             try {
@@ -93,6 +81,67 @@ describe("KeyBindings", () => {
             } catch (err) {
                 expect(err.name).toBe("UnreachableBinding");
             }
+        });
+
+        it("doesn't find modes when they exclude an active mode", () => {
+            kb.add({
+                command: "test",
+                keys: "Control Alt Delete",
+                modes: ["a-mode"],
+                except: ["input-mode"],
+            });
+            let found;
+            found = kb.find(["a-mode"], ["Control", "Alt", "Delete"]);
+            expect(found).toBeDefined();
+
+            found = kb.find(
+                ["a-mode", "input-mode"],
+                ["Control", "Alt", "Delete"],
+            );
+            expect(found).toBeUndefined();
+        });
+
+        it("finds global bindings when there are no active modes", () => {
+            kb.add({
+                command: "global",
+                keys: "Control Alt Delete",
+            });
+            const found = kb.find([""], ["Control", "Alt", "Delete"]);
+            if (!found) {
+                throw new Error("global binding not found");
+            }
+            expect(found.type).toBe("leaf");
+        });
+
+        it("finds global bindings in all modes", () => {
+            kb.add({
+                command: "global",
+                keys: "Control Alt Delete",
+            });
+            kb.add({
+                command: "local 1",
+                keys: "Control 1",
+                modes: ["local-1"],
+            });
+
+            kb.add({
+                command: "local 2",
+                keys: "Control 2",
+                modes: ["local-2"],
+            });
+
+            const found = kb.find(["local-1", "local-2"], ["Control"]);
+            if (!found) {
+                throw new Error("bindings not found");
+            }
+            if (found.type !== "branch") {
+                throw new Error("result should be branch");
+            }
+            expect(found.modes).toMatchObject([
+                "local-1",
+                "local-2",
+                "*global*",
+            ]);
         });
     });
 
