@@ -36,7 +36,7 @@ interface BranchesResult {
 }
 
 export class KeyBindings {
-    public defaultExceptions = [];
+    public defaultExceptions: string[];
     private modeMap: Map<string, KeyBindingTree>;
     private globalBindings: KeyBindingTree;
     constructor() {
@@ -86,11 +86,11 @@ export class KeyBindings {
                 return;
             }
 
-            if (
-                item.type === "leaf" &&
-                isIntersection(item.value.except, activeModes)
-            ) {
-                return;
+            if (Tree.isLeaf(item)) {
+                const excludeModes = item.value.except;
+                if (isIntersection(excludeModes, activeModes)) {
+                    return;
+                }
             }
 
             if (!result) {
@@ -111,7 +111,7 @@ export class KeyBindings {
             }
 
             if (result.type === "branch") {
-                if (item.type === "leaf") {
+                if (Tree.isLeaf(item)) {
                     // prettier-ignore
                     // tslint:disable-next-line:max-line-length
                     const err = new Error(`cannot reach bindings for key sequence '${keys}' in modes '${result.modes}' because command '${item.value.command}' from mode '${mode}' is in the way.`);
@@ -124,7 +124,7 @@ export class KeyBindings {
                 // we're dealing with a leaf and we shouldn't ever
                 // find more than one leaf.
 
-                if (item.type === "branch") {
+                if (Tree.isBranch(item)) {
                     // prettier-ignore
                     // tslint:disable-next-line:max-line-length
                     const err = new Error(`cannot reach bindings for key sequence '${keys}' in mode '${mode}' because command '${result.leaf.value.command}' from mode '${result.mode}' is in the way.`);

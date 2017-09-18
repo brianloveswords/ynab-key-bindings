@@ -45,9 +45,7 @@ export class App<ModeMap extends FunctionMap, CommandMap extends FunctionMap> {
         this.appRoot = new DOMWrapper(rootElement);
         this.modes = modes;
         this.commands = commands;
-        this.bindings = new KeyBindings({
-            modes: Object.keys(modes),
-        });
+        this.bindings = new KeyBindings();
         this.receiver = new KeyReceiver(this.bindings, this);
         this.appRoot.element.addEventListener(
             "keydown",
@@ -59,7 +57,7 @@ export class App<ModeMap extends FunctionMap, CommandMap extends FunctionMap> {
     public globalBind<M extends keyof ModeMap, C extends keyof CommandMap>(
         partialBinding: PartialKeyBinding<M, C>,
     ): this {
-        this.bindings.add(this.bindings.createBinding(partialBinding));
+        this.bindings.add(partialBinding);
         return this;
     }
 
@@ -80,11 +78,11 @@ export class App<ModeMap extends FunctionMap, CommandMap extends FunctionMap> {
     public setDefaultModeExceptions<M extends keyof ModeMap>(
         modeNames: M[],
     ): this {
-        this.defaultExceptions = modeNames;
+        this.bindings.defaultExceptions = modeNames;
         return this;
     }
 
-    public activeModes(event: Event): string[] {
+    public getActiveModes(event: Event): string[] {
         const modeNames = Object.keys(this.modes);
         return modeNames.filter(name =>
             this.modes[name].call(this, this.appRoot, event),

@@ -52,7 +52,7 @@ export class KeyReceiver {
     public keyHandler(event: KeyboardEvent) {
         const key = event.key;
 
-        const activeModes = this.app.activeModes(event);
+        const activeModes = this.app.getActiveModes(event);
         debug("active modes", activeModes);
 
         const possibleBindings = this.bindings.modeFilter(activeModes);

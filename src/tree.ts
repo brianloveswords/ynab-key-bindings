@@ -21,6 +21,17 @@ type Path<K> = K[];
 type InternalTree<K, V> = Map<K, TreeNode<K, V>>;
 
 export class Tree<K, V> {
+    public static isBranch(
+        node: Maybe<TreeNode<any, any>>,
+    ): node is Branch<any, any> {
+        return !!(node && node.type === "branch");
+    }
+
+    public static isLeaf(
+        node: Maybe<TreeNode<any, any>>,
+    ): node is Leaf<any, any> {
+        return !!(node && node.type === "leaf");
+    }
     private internalTree: InternalTree<K, V>;
     constructor(public parent?: Tree<K, V>, public fromBranch?: Branch<K, V>) {
         this.internalTree = new Map();
