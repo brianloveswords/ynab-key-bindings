@@ -19,9 +19,11 @@ export interface PartialKeyBinding<ModeName = string, CommandName = string> {
 
 type Keys = string[];
 
-type KeyBindingTree = Tree<string, KeyBinding>;
-type KeyBindingLeaf = Leaf<string, KeyBinding>;
-type KeyBindingBranch = Branch<string, KeyBinding>;
+export type KeyBindingTree = Tree<string, KeyBinding>;
+export type KeyBindingLeaf = Leaf<string, KeyBinding>;
+export type KeyBindingBranch = Branch<string, KeyBinding>;
+
+export type FindResult = LeafResult | BranchesResult | undefined;
 
 interface LeafResult {
     type: "leaf";
@@ -45,7 +47,7 @@ export class KeyBindings {
         this.defaultExceptions = [];
     }
 
-    public add(partialBinding: PartialKeyBinding) {
+    public add(partialBinding: PartialKeyBinding): this {
         const binding = this.createBinding(partialBinding);
         const path = binding.keys.split(/\s+/);
         const modes = binding.modes;
@@ -73,11 +75,8 @@ export class KeyBindings {
         };
     }
 
-    public find(
-        activeModes: string[],
-        keys: Keys,
-    ): LeafResult | BranchesResult | undefined {
-        let result: LeafResult | BranchesResult | undefined;
+    public find(activeModes: string[], keys: Keys): FindResult {
+        let result: FindResult;
 
         // tslint:disable-next-line:cyclomatic-complexity
         const innerFind = (mode: string, map: KeyBindingTree) => {
@@ -153,7 +152,7 @@ export class KeyBindings {
         return result;
     }
 
-    private findOrCreateMode(name: string) {
+    private findOrCreateMode(name: string): KeyBindingTree {
         const map = this.modeMap.get(name);
         if (map) {
             return map;
