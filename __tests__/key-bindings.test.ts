@@ -143,6 +143,44 @@ describe("KeyBindings", () => {
                 "*global*",
             ]);
         });
+
+        it("knows how to handle modifier keys", () => {
+            kb.add({
+                command: "test",
+                keys: "Control+Alt+Delete s Command+7",
+                modes: ["a-mode"],
+            });
+
+            const deleteKey = {
+                key: "Delete",
+                modifiers: ["Control", "Alt"],
+            };
+            const sevenKey = {
+                key: "7",
+                modifiers: ["Command"],
+            };
+
+            const sequence = [
+                "Control",
+                "Alt",
+                deleteKey,
+                "s",
+                "Command",
+                sevenKey,
+            ];
+
+            const found = kb.find(["a-mode"], sequence);
+
+            if (!found) {
+                throw new Error("did not find leaf");
+            }
+
+            if (found.type !== "leaf") {
+                throw new Error("should be leaf node");
+            }
+
+            expect(found.leaf.value.command).toBe("test");
+        });
     });
 
     // it("#modeFilter");

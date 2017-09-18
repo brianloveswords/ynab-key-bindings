@@ -4,6 +4,7 @@ import { Tree, Leaf, Branch } from "./tree";
 export interface KeyBinding<ModeName = string, CommandName = string> {
     keys: string;
     command: CommandName;
+    type: "sequence" | "chord";
     modes: ModeName[];
     except: ModeName[];
     args: any[];
@@ -12,12 +13,20 @@ export interface KeyBinding<ModeName = string, CommandName = string> {
 export interface PartialKeyBinding<ModeName = string, CommandName = string> {
     keys: string;
     command: CommandName;
+    type?: "sequence" | "chord";
     modes?: KeyBinding<ModeName, CommandName>["modes"];
     except?: KeyBinding<ModeName, CommandName>["except"];
     args?: KeyBinding<ModeName, CommandName>["args"];
 }
 
-type Keys = string[];
+type Keys = Key[];
+type Modifier = string;
+type Key = SimpleKey | DetailedKey;
+type SimpleKey = string;
+interface DetailedKey {
+    key: SimpleKey;
+    modifiers: Modifier[];
+}
 
 export type KeyBindingTree = Tree<string, KeyBinding>;
 export type KeyBindingLeaf = Leaf<string, KeyBinding>;
@@ -49,7 +58,7 @@ export class KeyBindings {
 
     public add(partialBinding: PartialKeyBinding): this {
         const binding = this.createBinding(partialBinding);
-        const path = binding.keys.split(/\s+/);
+        const path = this.determineInsertPath(binding);
         const modes = binding.modes;
 
         if (isEmpty(modes)) {
@@ -57,7 +66,7 @@ export class KeyBindings {
         } else {
             modes.forEach(mode => {
                 const map = this.findOrCreateMode(mode);
-                map.insert(path, binding);
+                const leaf = map.insert(path, binding);
             });
         }
 
@@ -66,9 +75,11 @@ export class KeyBindings {
 
     public createBinding(binding: PartialKeyBinding): KeyBinding {
         const exceptions = this.defaultExceptions;
+        const bindingType = this.determineBindingType(binding.keys);
         return {
             keys: binding.keys,
             command: binding.command,
+            type: bindingType,
             args: binding.args || [],
             modes: binding.modes || [],
             except: binding.except || exceptions,
@@ -77,10 +88,11 @@ export class KeyBindings {
 
     public find(activeModes: string[], keys: Keys): FindResult {
         let result: FindResult;
+        const path = this.keysToPath(keys);
 
         // tslint:disable-next-line:cyclomatic-complexity
         const innerFind = (mode: string, map: KeyBindingTree) => {
-            const item = map.find(keys);
+            const item = map.find(path);
 
             if (!item) {
                 return;
@@ -150,6 +162,47 @@ export class KeyBindings {
         });
         innerFind("*global*", this.globalBindings);
         return result;
+    }
+
+    private determineBindingType(keys: string): KeyBinding["type"] {
+        if (/(\w+)\+(\w+)/.test(keys)) {
+            return "chord";
+        }
+        return "sequence";
+    }
+
+    private determineInsertPath(binding: KeyBinding): string[] {
+        if (binding.type === "sequence") {
+            return binding.keys.split(/\s+/);
+        }
+        // we want to turn `Control+c Control+Meta+n` into
+        // [Control, Control+c, Control, Meta, Control+Meta+n]
+        const path: string[] = [];
+
+        // [Control+C, Control+Meta+N]
+        const chords = binding.keys.split(/\s+/);
+
+        chords.forEach(chord => {
+            // [Control, C] | [Control, Meta, N]
+            const parts = chord.split("+");
+            if (parts.length === 1) {
+                path.push(chord);
+                return;
+            }
+            const modifiers = parts.slice(0, -1);
+            path.push(...modifiers, chord);
+        });
+
+        return path;
+    }
+
+    private keysToPath(keys: Keys): string[] {
+        return keys.map(key => {
+            if (typeof key === "string") {
+                return key;
+            }
+            return [...key.modifiers, key.key].join("+");
+        });
     }
 
     private findOrCreateMode(name: string): KeyBindingTree {

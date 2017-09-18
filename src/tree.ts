@@ -1,3 +1,5 @@
+import { lastWithRest } from "./kitchen-sink";
+
 type Maybe<T> = T | undefined;
 
 export interface Branch<K, V> {
@@ -220,8 +222,4 @@ export class Tree<K, V> {
             return newTree;
         }, new Tree());
     }
-}
-
-function lastWithRest<T>(array: T[]): [T, T[]] {
-    return [array[array.length - 1], array.slice(0, -1)];
 }

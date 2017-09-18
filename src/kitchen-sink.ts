@@ -16,3 +16,7 @@ export function isIntersection<T>(source: T[], target: T[]): boolean {
         return target.indexOf(item) > -1;
     });
 }
+
+export function lastWithRest<T>(array: T[]): [T, T[]] {
+    return [array[array.length - 1], array.slice(0, -1)];
+}
