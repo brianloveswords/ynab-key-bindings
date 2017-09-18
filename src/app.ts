@@ -1,6 +1,6 @@
 import { DOMWrapper } from "./dom-wrapper";
 import { KeyBindings, KeyBinding, PartialKeyBinding } from "./key-bindings";
-import { KeyReceiver } from "./key-receiver";
+import { KeyHandler } from "./key-handler";
 
 type InvokedFromApp = (
     appRoot: DOMWrapper,
@@ -34,7 +34,7 @@ export class App<ModeMap extends FunctionMap, CommandMap extends FunctionMap> {
     private commands: CommandMap;
     private defaultExceptions: Array<keyof ModeMap>;
     private bindings: KeyBindings;
-    private receiver: KeyReceiver;
+    private handler: KeyHandler;
 
     constructor({
         rootElement,
@@ -46,12 +46,8 @@ export class App<ModeMap extends FunctionMap, CommandMap extends FunctionMap> {
         this.modes = modes;
         this.commands = commands;
         this.bindings = new KeyBindings();
-        this.receiver = new KeyReceiver(this.bindings, this);
-        this.appRoot.element.addEventListener(
-            "keydown",
-            this.receiver.keyHandler,
-            true,
-        );
+        this.handler = new KeyHandler(this.bindings);
+        this.setupKeyHandler();
     }
 
     public globalBind<M extends keyof ModeMap, C extends keyof CommandMap>(
@@ -95,5 +91,43 @@ export class App<ModeMap extends FunctionMap, CommandMap extends FunctionMap> {
         action.apply({}, [this.appRoot, event, ...args]);
     }
 
-    // public showDebugInfo(): void { }
+    private setupKeyHandler() {
+        const appRoot = this.appRoot.element;
+        const eventHandler = (event: KeyboardEvent) => {
+            const modes = this.getActiveModes(event);
+            const key = this.handler.eventToKey(event);
+            const result = this.handler.dispatchKey(key, modes);
+
+            if (result.type === "miss") {
+                console.log(
+                    `missed ${JSON.stringify(
+                        result.sequence,
+                    )} (${result.modes})`,
+                );
+                return true;
+            }
+
+            console.log("caught sequence", result.sequence);
+
+            event.stopPropagation();
+            event.preventDefault();
+
+            if (result.type === "pending") {
+                // prettier-ignore
+                const help = result.pending.map(p => {
+                    return `${p.remaining}: ${p.command}(${p.args.join(", ")})`;
+                });
+                console.log(`commands pending\n${help.join("\n")}`);
+                return false;
+            }
+
+            const binding = result.match;
+            const command = binding.command;
+            const args = binding.args;
+            console.log(`calling ${command}(${args.join(", ")})`);
+            this.invokeBinding(binding, event);
+            return false;
+        };
+        appRoot.addEventListener("keydown", eventHandler, true);
+    }
 }
