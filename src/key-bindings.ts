@@ -1,10 +1,5 @@
-import {
-    Maybe,
-    isEmpty,
-    isIntersection,
-    arrayDifference,
-} from "./kitchen-sink";
-import { Tree, TreeNode, Leaf, Branch } from "./tree";
+import { isEmpty, isIntersection } from "./kitchen-sink";
+import { Tree, Leaf, Branch } from "./tree";
 
 export interface KeyBinding<ModeName = string, CommandName = string> {
     keys: string;
@@ -24,37 +19,26 @@ export interface PartialKeyBinding<ModeName = string, CommandName = string> {
 
 type Keys = string[];
 
-type FindResult = Maybe<PrefixResult | BindingResult>;
-
-interface PrefixResult {
-    type: "prefix";
-}
-
-interface BindingResult {
-    type: "binding";
-    binding: KeyBinding;
-}
-
 type KeyBindingTree = Tree<string, KeyBinding>;
 type KeyBindingLeaf = Leaf<string, KeyBinding>;
 type KeyBindingBranch = Branch<string, KeyBinding>;
 
-type LeafResult = {
+interface LeafResult {
     type: "leaf";
     leaf: KeyBindingLeaf;
     mode: string;
-};
+}
 
-type BranchesResult = {
+interface BranchesResult {
     type: "branch";
     branches: KeyBindingBranch[];
     modes: string[];
-};
+}
 
 export class KeyBindings {
+    public defaultExceptions = [];
     private modeMap: Map<string, KeyBindingTree>;
     private globalBindings: KeyBindingTree;
-    public defaultExceptions = [];
     constructor() {
         this.modeMap = new Map();
         this.globalBindings = new Tree();
@@ -94,6 +78,7 @@ export class KeyBindings {
     ): LeafResult | BranchesResult | undefined {
         let result: LeafResult | BranchesResult | undefined;
 
+        // tslint:disable-next-line:cyclomatic-complexity
         const innerFind = (mode: string, map: KeyBindingTree) => {
             const item = map.find(keys);
 
@@ -119,7 +104,7 @@ export class KeyBindings {
                     result = {
                         type: "leaf",
                         leaf: item,
-                        mode: mode,
+                        mode,
                     };
                 }
                 return;
@@ -128,6 +113,7 @@ export class KeyBindings {
             if (result.type === "branch") {
                 if (item.type === "leaf") {
                     // prettier-ignore
+                    // tslint:disable-next-line:max-line-length
                     const err = new Error(`cannot reach bindings for key sequence '${keys}' in modes '${result.modes}' because command '${item.value.command}' from mode '${mode}' is in the way.`);
                     err.name = "UnreachableBinding";
                     throw err;
@@ -140,11 +126,13 @@ export class KeyBindings {
 
                 if (item.type === "branch") {
                     // prettier-ignore
+                    // tslint:disable-next-line:max-line-length
                     const err = new Error(`cannot reach bindings for key sequence '${keys}' in mode '${mode}' because command '${result.leaf.value.command}' from mode '${result.mode}' is in the way.`);
                     err.name = "UnreachableBinding";
                     throw err;
                 } else {
                     // prettier-ignore
+                    // tslint:disable-next-line:max-line-length
                     const err = new Error(`command '${item.value.command}' with key sequence '${keys}' in mode '${mode}' is being shadowed by '${result.leaf.value.command}' in mode '${result.mode}'`);
                     err.name = "ConflictingBinding";
                     throw err;
