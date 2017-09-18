@@ -1,20 +1,20 @@
 type Maybe<T> = T | undefined;
 
-interface Branch<K, V> {
+export interface Branch<K, V> {
     key: K;
     type: "branch";
     parent: Maybe<Tree<K, V>>;
     children: Tree<K, V>;
 }
 
-interface Leaf<K, V> {
+export interface Leaf<K, V> {
     key: K;
     type: "leaf";
     parent: Maybe<Tree<K, V>>;
     value: V;
 }
 
-type TreeNode<K, V> = Leaf<K, V> | Branch<K, V>;
+export type TreeNode<K, V> = Leaf<K, V> | Branch<K, V>;
 
 type Path<K> = K[];
 
