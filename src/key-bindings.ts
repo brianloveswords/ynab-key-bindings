@@ -19,8 +19,7 @@ export interface PartialKeyBinding<ModeName = string, CommandName = string> {
     args?: KeyBinding<ModeName, CommandName>["args"];
 }
 
-type Keys = Key[];
-type Modifier = string;
+export type Modifier = "Alt" | "Control" | "Meta";
 export type Key = SimpleKey | DetailedKey;
 export type SimpleKey = string;
 export interface DetailedKey {
@@ -66,7 +65,7 @@ export class KeyBindings {
         } else {
             modes.forEach(mode => {
                 const map = this.findOrCreateMode(mode);
-                const leaf = map.insert(path, binding);
+                map.insert(path, binding);
             });
         }
 
@@ -86,7 +85,7 @@ export class KeyBindings {
         };
     }
 
-    public find(activeModes: string[], keys: Keys): FindResult {
+    public find(activeModes: string[], keys: Key[]): FindResult {
         let result: FindResult;
         const path = this.keysToPath(keys);
 
@@ -196,7 +195,7 @@ export class KeyBindings {
         return path;
     }
 
-    private keysToPath(keys: Keys): string[] {
+    private keysToPath(keys: Key[]): string[] {
         return keys.map(key => {
             if (typeof key === "string") {
                 return key;

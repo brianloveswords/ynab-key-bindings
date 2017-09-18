@@ -42,6 +42,31 @@ describe("KeyHandler", () => {
         kh = new KeyHandler(kb);
     });
 
+    describe("#eventToKey", () => {
+        it("simple keys don't get modifiers", () => {
+            const s = new KeyboardEvent("keydown", {
+                key: "s",
+            });
+            expect(kh.eventToKey(s)).toMatchObject({
+                key: "s",
+                modifiers: [],
+            });
+        });
+
+        it("keys with modifiers get the detailed treatment", () => {
+            const s = new KeyboardEvent("keydown", {
+                key: "s",
+                altKey: true,
+                metaKey: true,
+                ctrlKey: true,
+            });
+            expect(kh.eventToKey(s)).toMatchObject({
+                key: "s",
+                modifiers: ["Alt", "Control", "Meta"],
+            });
+        });
+    });
+
     describe("#dispatchKey", () => {
         it("does not keep keys when they don't match commands", () => {
             const result = kh.dispatchKey("key-miss", []);

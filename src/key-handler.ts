@@ -103,6 +103,31 @@ export class KeyHandler {
         return oldSequence;
     }
 
+    public eventToKey(event: KeyboardEvent): Key {
+        const detailedKey: Key = {
+            key: "",
+            modifiers: [],
+        };
+
+        detailedKey.key = event.key;
+
+        if (event.key.match(/alt|control|meta/i)) {
+            return detailedKey;
+        }
+
+        if (event.altKey) {
+            detailedKey.modifiers.push("Alt");
+        }
+        if (event.ctrlKey) {
+            detailedKey.modifiers.push("Control");
+        }
+        if (event.metaKey) {
+            detailedKey.modifiers.push("Meta");
+        }
+
+        return detailedKey;
+    }
+
     private collapseBranches(
         branches: KeyBindingBranch[],
         sequence: Key[],
