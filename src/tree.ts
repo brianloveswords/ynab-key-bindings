@@ -42,7 +42,7 @@ export class Tree<K, V> {
         for (const tree of trees) {
             for (const [_, node] of tree.internalTree) {
                 yield node;
-                if (tree.isBranch(node)) {
+                if (Tree.isBranch(node)) {
                     trees.push(node.children);
                 }
             }
@@ -83,7 +83,7 @@ export class Tree<K, V> {
         let tree: Tree<K, V> = this;
         for (const intermediateKey of rest) {
             const possibleNode = tree.internalTree.get(intermediateKey);
-            if (!tree.isBranch(possibleNode)) {
+            if (!Tree.isBranch(possibleNode)) {
                 return undefined;
             }
             tree = possibleNode.children;
@@ -94,10 +94,10 @@ export class Tree<K, V> {
 
     public findOrInsert(path: Path<K>, value: V): Leaf<K, V> {
         const possibleNode = this.find(path);
-        if (this.isLeaf(possibleNode)) {
+        if (Tree.isLeaf(possibleNode)) {
             return possibleNode;
         }
-        if (this.isBranch(possibleNode)) {
+        if (Tree.isBranch(possibleNode)) {
             throw new Error(
                 `could not create leaf at ${path}, branch in the way`,
             );
@@ -116,7 +116,7 @@ export class Tree<K, V> {
         for (const intermediateKey of rest) {
             const possibleNode = tree.internalTree.get(intermediateKey);
 
-            if (tree.isLeaf(possibleNode)) {
+            if (Tree.isLeaf(possibleNode)) {
                 throw new Error("leaf node in the way");
             }
 
@@ -141,7 +141,7 @@ export class Tree<K, V> {
         for (let i = 0; trees[i]; i++) {
             const { originalTree, workingTree } = trees[i];
             for (const [_, node] of originalTree.internalTree) {
-                if (this.isBranch(node)) {
+                if (Tree.isBranch(node)) {
                     trees.push({
                         originalTree: node.children,
                         workingTree: workingTree.insertBranch(node.key),
@@ -162,9 +162,9 @@ export class Tree<K, V> {
     public mapRecursive(fn: (value: V) => V): Tree<K, V> {
         return (function mapper(originalTree: Tree<K, V>, newTree: Tree<K, V>) {
             for (const [key, node] of originalTree.internalTree) {
-                if (originalTree.isLeaf(node)) {
+                if (Tree.isLeaf(node)) {
                     newTree.insertLeaf(key, fn(node.value));
-                } else if (originalTree.isBranch(node)) {
+                } else if (Tree.isBranch(node)) {
                     mapper(node.children, newTree.insertBranch(key));
                 }
             }
@@ -174,7 +174,7 @@ export class Tree<K, V> {
 
     public forEach<A>(fn: (node: Leaf<K, V>) => A): void {
         for (const node of this) {
-            if (this.isLeaf(node)) {
+            if (Tree.isLeaf(node)) {
                 fn(node);
             }
         }
@@ -188,14 +188,6 @@ export class Tree<K, V> {
             accum = fn(accum, node.value, node);
         });
         return accum;
-    }
-
-    public isBranch(node: Maybe<TreeNode<K, V>>): node is Branch<K, V> {
-        return !!(node && node.type === "branch");
-    }
-
-    public isLeaf(node: Maybe<TreeNode<K, V>>): node is Leaf<K, V> {
-        return !!(node && node.type === "leaf");
     }
 
     public getNodePath(node: TreeNode<K, V>, path: Path<K> = []): Path<K> {
