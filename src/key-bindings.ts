@@ -41,7 +41,7 @@ export type KeyBindingBranch = Branch<string, KeyBinding>;
 
 export type FindResult = LeafResult | BranchesResult | undefined;
 
-export function getUnmodifiedKey(key): SimpleKey {
+export function getUnmodifiedKey(key: Key): SimpleKey {
     if (typeof key === "string") {
         return key;
     } else {

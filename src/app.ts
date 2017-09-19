@@ -107,6 +107,10 @@ export class App<ModeMap extends FunctionMap, CommandMap extends FunctionMap> {
                 return true;
             }
 
+            if (result.type === "modifier") {
+                return true;
+            }
+
             console.log("caught sequence", result.sequence);
 
             event.stopPropagation();
