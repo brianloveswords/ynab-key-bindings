@@ -29,7 +29,7 @@
         "transform": {
             "\\.(ts|tsx)$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
         },
-        "testRegex": "/__tests__/.*\\.(ts|tsx|js)$"
+        "testRegex": "/test/.*\\.(ts|tsx|js)$"
     },
     "dependencies": {
         "array-equal": "^1.0.0"
