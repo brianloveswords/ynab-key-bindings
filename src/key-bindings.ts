@@ -69,6 +69,7 @@ export class KeyBindings {
             if (typeof key === "string") {
                 return key;
             }
+            key.modifiers.sort();
             return [...key.modifiers, key.key].join("+");
         });
     }
@@ -80,7 +81,17 @@ export class KeyBindings {
         return "sequence";
     }
     public static determineInsertPath(binding: KeyBinding): string[] {
-        return binding.keys.split(/\s+/);
+        const presses = binding.keys.split(/\s+/);
+        const path = presses.map(press => {
+            if (KeyBindings.determineBindingType(press) === "chord") {
+                const [key, modifiers] = lastWithRest(press.split("+"));
+                modifiers.sort();
+                return [...modifiers, key].join("+");
+            }
+            return press;
+        });
+
+        return path;
     }
 
     public defaultExceptions: string[];

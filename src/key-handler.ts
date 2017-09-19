@@ -81,6 +81,7 @@ export class KeyHandler {
         this.storedModifiers = [];
     }
 
+    // tslint:disable-next-line:cyclomatic-complexity
     public dispatchKey(key: Key, modes: string[]): DispatchKeyResult {
         this.keySequence.push(key);
         this.currentModes = modes;
