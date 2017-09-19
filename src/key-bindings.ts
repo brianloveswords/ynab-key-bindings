@@ -1,6 +1,6 @@
 import {
     isEmpty,
-    hasIntersection,
+    intersects,
     arrayDifference,
     lastWithRest,
 } from "./kitchen-sink";
@@ -156,7 +156,7 @@ export class KeyBindings {
                     item.value.modes,
                 );
 
-                if (hasIntersection(excludeModes, activeModes)) {
+                if (intersects(excludeModes, activeModes)) {
                     return;
                 }
             }

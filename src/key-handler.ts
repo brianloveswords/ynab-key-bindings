@@ -1,4 +1,4 @@
-import { hasIntersection, isSubset } from "./kitchen-sink";
+import { intersects, isSubset } from "./kitchen-sink";
 import {
     KeyBindings,
     KeyBindingBranch,
@@ -182,7 +182,7 @@ export class KeyHandler {
         const oldModes = this.currentModes;
         this.currentModes = newModes;
 
-        if (!hasIntersection(oldModes, newModes)) {
+        if (!intersects(oldModes, newModes)) {
             return {
                 reset: true,
                 sequence: this.clearSequence(),

@@ -16,7 +16,7 @@ export function arrayDifference<T>(source: T[], target: T[]): T[] {
     return source.filter(i => target.indexOf(i) === -1);
 }
 
-export function hasIntersection<T>(source: T[], target: T[]): boolean {
+export function intersects<T>(source: T[], target: T[]): boolean {
     return source.some(item => {
         return target.indexOf(item) > -1;
     });
