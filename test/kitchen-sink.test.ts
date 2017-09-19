@@ -27,14 +27,4 @@ describe("kitchen sink utilities", () => {
     it("lastWithRest", () => {
         expect(sink.lastWithRest([1, 2, 3, 4])).toMatchObject([4, [1, 2, 3]]);
     });
-
-    it("isOrderedSubset", () => {
-        expect(
-            sink.isOrderedSubset(
-                [1, 1, 2, 2, 3, 3],
-                [1, "x", 2, "x", 3, "x", 4],
-            ),
-        ).toBe(true);
-        expect(sink.isOrderedSubset([3, 2, 1], [1, 2, 3, 4])).toBe(false);
-    });
 });

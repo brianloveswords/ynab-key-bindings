@@ -7,35 +7,10 @@ import {
 } from "../src/key-bindings";
 
 describe("KeyHandler", () => {
-    const kb = new KeyBindings()
-        .add({
-            command: "sleep",
-            keys: "b e d",
-            args: ["dragonaut"],
-        })
-        .add({
-            command: "underworld",
-            keys: "b u",
-            modes: ["bands"],
-        })
-        .add({
-            command: "stove",
-            keys: "b Control s",
-            modes: ["bands"],
-        })
-        .add({
-            command: "hum",
-            keys: "b Control h",
-            modes: ["bands"],
-        })
-        .add({
-            command: "jasmine",
-            keys: "t j",
-            modes: ["tea"],
-        });
-
     let kh: KeyHandler;
+    let kb: KeyBindings;
     beforeEach(() => {
+        kb = new KeyBindings();
         kh = new KeyHandler(kb);
     });
 
@@ -72,12 +47,40 @@ describe("KeyHandler", () => {
             expect(result.sequence).toMatchObject(["key-miss"]);
         });
         it("does not keep keys when mode doesn't match anything", () => {
+            kb.add({
+                command: "won't be found",
+                keys: "t",
+                modes: ["not-bands"],
+            });
+
             const result = kh.dispatchKey("t", ["bands"]);
             expect(kh.keySequence.length).toBe(0);
             expect(result.type).toBe("miss");
             expect(result.sequence).toMatchObject(["t"]);
         });
         it("keeps key when it matches a prefix", () => {
+            kb
+                .add({
+                    command: "sleep",
+                    keys: "b e d",
+                    args: ["dragonaut"],
+                })
+                .add({
+                    command: "underworld",
+                    keys: "b u",
+                    modes: ["bands"],
+                })
+                .add({
+                    command: "stove",
+                    keys: "b Control s",
+                    modes: ["bands"],
+                })
+                .add({
+                    command: "hum",
+                    keys: "b Control h",
+                    modes: ["bands"],
+                });
+
             const result = kh.dispatchKey("b", ["bands"]);
             expect(kh.keySequence.length).toBe(1);
             if (result.type !== "pending") {
@@ -93,6 +96,18 @@ describe("KeyHandler", () => {
             expect(commands).toContain("sleep");
         });
         it("keeps track of the sequence when it continues to match", () => {
+            kb
+                .add({
+                    command: "stove",
+                    keys: "b Control s",
+                    modes: ["bands"],
+                })
+                .add({
+                    command: "hum",
+                    keys: "b Control h",
+                    modes: ["bands"],
+                });
+
             kh.dispatchKey("b", ["bands"]);
             const result = kh.dispatchKey("Control", ["bands"]);
             expect(kh.keySequence.length).toBe(2);
@@ -108,6 +123,12 @@ describe("KeyHandler", () => {
         });
 
         it("empties sequence when a complete match is found", () => {
+            kb.add({
+                command: "sleep",
+                keys: "b e d",
+                args: ["dragonaut"],
+            });
+
             kh.dispatchKey("b", ["bands"]);
             kh.dispatchKey("e", ["bands"]);
             const result = kh.dispatchKey("d", ["bands"]);
@@ -124,6 +145,12 @@ describe("KeyHandler", () => {
         });
 
         it("empties sequence when there's a miss", () => {
+            kb.add({
+                command: "sleep",
+                keys: "b e d",
+                args: ["dragonaut"],
+            });
+
             kh.dispatchKey("b", ["bands"]);
             kh.dispatchKey("e", ["bands"]);
             expect(kh.keySequence.length).toBe(2);
@@ -137,6 +164,17 @@ describe("KeyHandler", () => {
         });
 
         it("does not carry sequence if mode gets lost", () => {
+            kb
+                .add({
+                    command: "stove",
+                    keys: "b Control s",
+                    modes: ["bands"],
+                })
+                .add({
+                    command: "hum",
+                    keys: "b Control h",
+                    modes: ["bands"],
+                });
             kh.dispatchKey("b", ["bands"]);
             kh.dispatchKey("Control", ["bands"]);
             expect(kh.keySequence.length).toBe(2);
@@ -148,6 +186,17 @@ describe("KeyHandler", () => {
         });
 
         it("drops sequence when notified about mode change that doesn't include mode", () => {
+            kb
+                .add({
+                    command: "stove",
+                    keys: "b Control s",
+                    modes: ["bands"],
+                })
+                .add({
+                    command: "milky oolong",
+                    keys: "t m o ",
+                    modes: ["tea"],
+                });
             kh.dispatchKey("b", ["bands"]);
             kh.dispatchKey("Control", ["bands"]);
 
@@ -167,6 +216,27 @@ describe("KeyHandler", () => {
         });
 
         it("does not drop sequence when change is overlapping", () => {
+            kb
+                .add({
+                    command: "sleep",
+                    keys: "b e d",
+                    args: ["dragonaut"],
+                })
+                .add({
+                    command: "underworld",
+                    keys: "b u",
+                    modes: ["bands"],
+                })
+                .add({
+                    command: "stove",
+                    keys: "b Control s",
+                    modes: ["bands"],
+                })
+                .add({
+                    command: "hum",
+                    keys: "b Control h",
+                    modes: ["bands"],
+                });
             kh.dispatchKey("b", ["bands"]);
             kh.dispatchKey("Control", ["bands"]);
 
@@ -186,12 +256,10 @@ describe("KeyHandler", () => {
         });
 
         it("knows what to do with modifier keys", () => {
-            kh = new KeyHandler(
-                new KeyBindings().add({
-                    command: "very sleep",
-                    keys: "Control+b Meta+e Meta+d",
-                }),
-            );
+            kb.add({
+                command: "very sleep",
+                keys: "Control+b Meta+e Meta+d",
+            });
 
             const sequence: DetailedKey[] = [
                 { key: "Control", modifiers: [] },
@@ -210,14 +278,11 @@ describe("KeyHandler", () => {
         });
 
         it("will fall back to a sequence if a chord isn't found", () => {
-            kh = new KeyHandler(
-                new KeyBindings().add({
-                    command: "lazy typer",
-                    keys: "Control s s",
-                }),
-            );
+            kb.add({
+                command: "lazy typer",
+                keys: "Control s s",
+            });
 
-            // keys: "Control+b Meta+e Meta+d",
             const sequence: DetailedKey[] = [
                 { key: "Control", modifiers: [] },
                 { key: "s", modifiers: ["Control"] },
@@ -232,14 +297,11 @@ describe("KeyHandler", () => {
         });
 
         it("does not fall back to bare letters", () => {
-            kh = new KeyHandler(
-                new KeyBindings().add({
-                    command: "lazy typer",
-                    keys: "s",
-                }),
-            );
+            kb.add({
+                command: "lazy typer",
+                keys: "s",
+            });
 
-            // keys: "Control+b Meta+e Meta+d",
             const sequence: DetailedKey[] = [
                 { key: "Control", modifiers: [] },
                 { key: "s", modifiers: ["Control"] },
@@ -253,14 +315,11 @@ describe("KeyHandler", () => {
         });
 
         it("handles holding a modifier between presses", () => {
-            kh = new KeyHandler(
-                new KeyBindings().add({
-                    command: "lazy typer",
-                    keys: "Control+r Control+r",
-                }),
-            );
+            kb.add({
+                command: "lazy typer",
+                keys: "Control+r Control+r",
+            });
 
-            // keys: "Control+b Meta+e Meta+d",
             const sequence: DetailedKey[] = [
                 { key: "Control", modifiers: [] },
                 { key: "r", modifiers: ["Control"] },
@@ -274,15 +333,33 @@ describe("KeyHandler", () => {
             }
         });
 
-        it("does not fall back when modifier doesn't match", () => {
-            kh = new KeyHandler(
-                new KeyBindings().add({
-                    command: "lazy typer",
-                    keys: "Control a r",
-                }),
-            );
+        it("handles holding of the modifier for lazy sequences", () => {
+            kb.add({
+                command: "lazy typer",
+                keys: "Control r r r r",
+            });
 
-            // keys: "Control+b Meta+e Meta+d",
+            const sequence: DetailedKey[] = [
+                { key: "Control", modifiers: [] },
+                { key: "r", modifiers: ["Control"] },
+                { key: "r", modifiers: ["Control"] },
+                { key: "r", modifiers: [] },
+                { key: "r", modifiers: [] },
+            ];
+            const results = sequence.map(k => kh.dispatchKey(k, [""]));
+            const result = results.pop();
+
+            if (result.type !== "match") {
+                throw new Error("dispatcher should miss");
+            }
+        });
+
+        it("does not fall back when modifier doesn't match", () => {
+            kb.add({
+                command: "lazy typer",
+                keys: "Control a r",
+            });
+
             const sequence: DetailedKey[] = [
                 { key: "Control", modifiers: [] },
                 { key: "a", modifiers: ["Meta", "Control"] },
@@ -293,6 +370,56 @@ describe("KeyHandler", () => {
 
             if (result.type !== "miss") {
                 throw new Error("dispatcher should miss");
+            }
+        });
+
+        it("does not fall back when order is wrong", () => {
+            kb.add({
+                command: "lazy typer",
+                keys: "Control a b Meta c",
+            });
+
+            const sequence: DetailedKey[] = [
+                { key: "Control", modifiers: [] },
+                { key: "a", modifiers: ["Control"] },
+                { key: "Meta", modifiers: ["Control"] },
+                { key: "b", modifiers: ["Control", "Meta"] },
+                { key: "Control", modifiers: [] },
+                { key: "c", modifiers: ["Control"] },
+            ];
+            const results = sequence.map(k => kh.dispatchKey(k, [""]));
+            const result = results.pop();
+
+            if (result.type !== "miss") {
+                throw new Error("dispatcher should miss");
+            }
+        });
+
+        it("can lazy type complex sequences", () => {
+            kb.add({
+                command: "lazy typer",
+                keys: "Control a b Meta c Alt d e Shift+Control+f",
+            });
+
+            const sequence: DetailedKey[] = [
+                { key: "Control", modifiers: [] },
+                { key: "a", modifiers: ["Control"] },
+                { key: "b", modifiers: ["Control"] },
+                { key: "Meta", modifiers: [] },
+                { key: "c", modifiers: ["Meta"] },
+                { key: "Alt", modifiers: [] },
+                { key: "d", modifiers: ["Alt"] },
+                { key: "e", modifiers: [] },
+                { key: "Shift", modifiers: [] },
+                { key: "Control", modifiers: ["Shift"] },
+                { key: "f", modifiers: ["Control", "Shift"] },
+            ];
+
+            const results = sequence.map(k => kh.dispatchKey(k, [""]));
+            const result = results.pop();
+
+            if (result.type !== "match") {
+                throw new Error("dispatcher should match");
             }
         });
     });

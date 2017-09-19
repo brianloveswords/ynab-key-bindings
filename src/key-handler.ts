@@ -1,4 +1,4 @@
-import { isIntersection, isSubset } from "./kitchen-sink";
+import { hasIntersection, isSubset } from "./kitchen-sink";
 import {
     KeyBindings,
     KeyBindingBranch,
@@ -85,8 +85,31 @@ export class KeyHandler {
     public dispatchKey(key: Key, modes: string[]): DispatchKeyResult {
         this.keySequence.push(key);
         this.currentModes = modes;
-        const result = this.bindings.find(modes, this.keySequence);
-        if (!result) {
+
+        const findResult = this.bindings.find(modes, this.keySequence);
+
+        if (!findResult) {
+            /* We want to first check if this is a bare modifier key
+               and if it is we can safely ignore those and continue the
+               sequence.
+
+               If we missed and the sequence contained a modifier key,
+               we should check for sloppy typing. For example, if a
+               command expects the sequence "Control a" and the user
+               accidentally holds onto Control for too long, that can
+               come up as "Control Control+a".
+
+               We want to allow for that kind of sloppiness, so we
+               hold that Control key in reserve and try to re-dispatch
+               as the bare key. Later, if we find a match, we will
+               validate that the stored modifier keys are a subset of
+               sequence we eventually found to ensure we don't end up
+               saying something like "Control Meta+a" doesn't match
+               a command looking for "Control a".
+
+               If the key isn't a modifier and it doesn't have any
+               modifiers, well, that's just a plain old miss.
+            */
             if (isModifier(key)) {
                 this.keySequence.pop();
                 return {
@@ -101,17 +124,19 @@ export class KeyHandler {
                 return this.dispatchKey(getUnmodifiedKey(key), modes);
             }
 
-            const missedSequence = this.clearSequence();
             return {
                 type: "miss",
-                sequence: missedSequence,
+                sequence: this.clearSequence(),
                 modes,
             };
         }
 
-        if (result.type === "branch") {
+        if (findResult.type === "branch") {
             const sequence = [...this.keySequence];
-            const pending = this.collapseBranches(result.branches, sequence);
+            const pending = this.collapseBranches(
+                findResult.branches,
+                sequence,
+            );
             return {
                 type: "pending",
                 pending,
@@ -122,8 +147,18 @@ export class KeyHandler {
 
         const storedModifiers = this.storedModifiers;
         const capturedSequence = this.clearSequence();
-        const binding = result.leaf.value;
+        const binding = findResult.leaf.value;
 
+        /* As mentioned above,if we have stored modifiers that means
+           we made affordances for some sloppy typing. The stored
+           modifiers should all be present somewhere in the path.
+
+           We don't want to check amount because we want to enable the
+           following match:
+
+              press: Control+a Control+b Control+c
+              command: Control a b c
+        */
         if (storedModifiers.length) {
             const path = KeyBindings.determineInsertPath(binding);
             if (!isSubset(storedModifiers, path)) {
@@ -147,7 +182,7 @@ export class KeyHandler {
         const oldModes = this.currentModes;
         this.currentModes = newModes;
 
-        if (!isIntersection(oldModes, newModes)) {
+        if (!hasIntersection(oldModes, newModes)) {
             return {
                 reset: true,
                 sequence: this.clearSequence(),
@@ -178,10 +213,6 @@ export class KeyHandler {
 
         detailedKey.key = event.key;
 
-        if (event.key.match(/alt|control|meta/i)) {
-            return detailedKey;
-        }
-
         if (event.altKey) {
             detailedKey.modifiers.push("Alt");
         }
@@ -191,7 +222,11 @@ export class KeyHandler {
         if (event.metaKey) {
             detailedKey.modifiers.push("Meta");
         }
+        if (event.shiftKey) {
+            detailedKey.modifiers.push("Shift");
+        }
 
+        detailedKey.modifiers.sort();
         return detailedKey;
     }
 

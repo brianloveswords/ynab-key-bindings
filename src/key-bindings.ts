@@ -1,4 +1,9 @@
-import { isEmpty, isIntersection, arrayDifference } from "./kitchen-sink";
+import {
+    isEmpty,
+    hasIntersection,
+    arrayDifference,
+    lastWithRest,
+} from "./kitchen-sink";
 import { Tree, Leaf, Branch } from "./tree";
 
 export interface KeyBinding<ModeName = string, CommandName = string> {
@@ -19,7 +24,10 @@ export interface PartialKeyBinding<ModeName = string, CommandName = string> {
     args?: KeyBinding<ModeName, CommandName>["args"];
 }
 
-export type Modifier = "Alt" | "Control" | "Meta";
+export type Modifier = "Alt" | "Control" | "Meta" | "Shift";
+export function isModifier(key: Key): key is Modifier {
+    return /Alt|Control|Meta|Shift/.test(getUnmodifiedKey(key));
+}
 export type Key = SimpleKey | DetailedKey;
 export type SimpleKey = string;
 export interface DetailedKey {
@@ -39,9 +47,6 @@ export function getUnmodifiedKey(key): SimpleKey {
     } else {
         return key.key;
     }
-}
-export function isModifier(key: Key): key is Modifier {
-    return /Alt|Control|Meta/.test(getUnmodifiedKey(key));
 }
 
 export function hasModifier(key: Key): key is DetailedKey {
@@ -151,7 +156,7 @@ export class KeyBindings {
                     item.value.modes,
                 );
 
-                if (isIntersection(excludeModes, activeModes)) {
+                if (hasIntersection(excludeModes, activeModes)) {
                     return;
                 }
             }
