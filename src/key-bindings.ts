@@ -33,6 +33,24 @@ export type KeyBindingBranch = Branch<string, KeyBinding>;
 
 export type FindResult = LeafResult | BranchesResult | undefined;
 
+export function getUnmodifiedKey(key): SimpleKey {
+    if (typeof key === "string") {
+        return key;
+    } else {
+        return key.key;
+    }
+}
+export function isModifier(key: Key): key is Modifier {
+    return /Alt|Control|Meta/.test(getUnmodifiedKey(key));
+}
+
+export function hasModifier(key: Key): key is DetailedKey {
+    if (typeof key === "string") {
+        return false;
+    }
+    return key.modifiers.length > 0;
+}
+
 interface LeafResult {
     type: "leaf";
     leaf: KeyBindingLeaf;
@@ -62,28 +80,7 @@ export class KeyBindings {
         return "sequence";
     }
     public static determineInsertPath(binding: KeyBinding): string[] {
-        if (binding.type === "sequence") {
-            return binding.keys.split(/\s+/);
-        }
-        // we want to turn `Control+c Control+Meta+n` into
-        // [Control, Control+c, Control, Meta, Control+Meta+n]
-        const path: string[] = [];
-
-        // [Control+C, Control+Meta+N]
-        const chords = binding.keys.split(/\s+/);
-
-        chords.forEach(chord => {
-            // [Control, C] | [Control, Meta, N]
-            const parts = chord.split("+");
-            if (parts.length === 1) {
-                path.push(chord);
-                return;
-            }
-            const modifiers = parts.slice(0, -1);
-            path.push(...modifiers, chord);
-        });
-
-        return path;
+        return binding.keys.split(/\s+/);
     }
 
     public defaultExceptions: string[];

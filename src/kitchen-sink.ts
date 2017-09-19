@@ -17,6 +17,12 @@ export function isIntersection<T>(source: T[], target: T[]): boolean {
     });
 }
 
+export function isSubset<T>(source: T[], target: T[]): boolean {
+    return source.every(item => {
+        return target.indexOf(item) > -1;
+    });
+}
+
 export function lastWithRest<T>(array: T[]): [T, T[]] {
     return [array[array.length - 1], array.slice(0, -1)];
 }

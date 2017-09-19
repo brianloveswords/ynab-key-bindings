@@ -9,10 +9,6 @@ import {
 describe("KeyHandler", () => {
     const kb = new KeyBindings()
         .add({
-            command: "very sleep",
-            keys: "Control+b Meta+e Meta+d",
-        })
-        .add({
             command: "sleep",
             keys: "b e d",
             args: ["dragonaut"],
@@ -24,12 +20,12 @@ describe("KeyHandler", () => {
         })
         .add({
             command: "stove",
-            keys: "b ! s",
+            keys: "b Control s",
             modes: ["bands"],
         })
         .add({
             command: "hum",
-            keys: "b ! h",
+            keys: "b Control h",
             modes: ["bands"],
         })
         .add({
@@ -98,12 +94,12 @@ describe("KeyHandler", () => {
         });
         it("keeps track of the sequence when it continues to match", () => {
             kh.dispatchKey("b", ["bands"]);
-            const result = kh.dispatchKey("!", ["bands"]);
+            const result = kh.dispatchKey("Control", ["bands"]);
             expect(kh.keySequence.length).toBe(2);
             if (result.type !== "pending") {
                 throw new Error("result should be pending");
             }
-            expect(result.sequence).toMatchObject(["b", "!"]);
+            expect(result.sequence).toMatchObject(["b", "Control"]);
             expect(result.pending.length).toBe(2);
 
             const commands = result.pending.map(p => p.command);
@@ -142,7 +138,7 @@ describe("KeyHandler", () => {
 
         it("does not carry sequence if mode gets lost", () => {
             kh.dispatchKey("b", ["bands"]);
-            kh.dispatchKey("!", ["bands"]);
+            kh.dispatchKey("Control", ["bands"]);
             expect(kh.keySequence.length).toBe(2);
             const result = kh.dispatchKey("s", ["tea"]);
 
@@ -153,14 +149,14 @@ describe("KeyHandler", () => {
 
         it("drops sequence when notified about mode change that doesn't include mode", () => {
             kh.dispatchKey("b", ["bands"]);
-            kh.dispatchKey("!", ["bands"]);
+            kh.dispatchKey("Control", ["bands"]);
 
             const modeChangeResult = kh.modeChange(["tea"]);
             expect(modeChangeResult).toMatchObject({
                 reset: true,
                 oldModes: ["bands"],
                 newModes: ["tea"],
-                sequence: ["b", "!"],
+                sequence: ["b", "Control"],
             });
 
             const dispatchResult = kh.dispatchKey("t", ["tea"]);
@@ -172,14 +168,14 @@ describe("KeyHandler", () => {
 
         it("does not drop sequence when change is overlapping", () => {
             kh.dispatchKey("b", ["bands"]);
-            kh.dispatchKey("!", ["bands"]);
+            kh.dispatchKey("Control", ["bands"]);
 
             const modeChangeResult = kh.modeChange(["bands", "tea"]);
             expect(modeChangeResult).toMatchObject({
                 reset: false,
                 oldModes: ["bands"],
                 newModes: ["bands", "tea"],
-                sequence: ["b", "!"],
+                sequence: ["b", "Control"],
             });
 
             const dispatchResult = kh.dispatchKey("s", ["bands", "tea"]);
@@ -190,7 +186,13 @@ describe("KeyHandler", () => {
         });
 
         it("knows what to do with modifier keys", () => {
-            // keys: "Control+b Meta+e Meta+d",
+            kh = new KeyHandler(
+                new KeyBindings().add({
+                    command: "very sleep",
+                    keys: "Control+b Meta+e Meta+d",
+                }),
+            );
+
             const sequence: DetailedKey[] = [
                 { key: "Control", modifiers: [] },
                 { key: "b", modifiers: ["Control"] },
@@ -211,13 +213,14 @@ describe("KeyHandler", () => {
             kh = new KeyHandler(
                 new KeyBindings().add({
                     command: "lazy typer",
-                    keys: "Control s",
+                    keys: "Control s s",
                 }),
             );
 
             // keys: "Control+b Meta+e Meta+d",
             const sequence: DetailedKey[] = [
                 { key: "Control", modifiers: [] },
+                { key: "s", modifiers: ["Control"] },
                 { key: "s", modifiers: ["Control"] },
             ];
             const results = sequence.map(k => kh.dispatchKey(k, [""]));
@@ -249,7 +252,29 @@ describe("KeyHandler", () => {
             }
         });
 
-        it("does not fall back when history doesn't match", () => {
+        it("handles holding a modifier between presses", () => {
+            kh = new KeyHandler(
+                new KeyBindings().add({
+                    command: "lazy typer",
+                    keys: "Control+r Control+r",
+                }),
+            );
+
+            // keys: "Control+b Meta+e Meta+d",
+            const sequence: DetailedKey[] = [
+                { key: "Control", modifiers: [] },
+                { key: "r", modifiers: ["Control"] },
+                { key: "r", modifiers: ["Control"] },
+            ];
+            const results = sequence.map(k => kh.dispatchKey(k, [""]));
+            const result = results.pop();
+
+            if (result.type !== "match") {
+                throw new Error("dispatcher should miss");
+            }
+        });
+
+        it("does not fall back when modifier doesn't match", () => {
             kh = new KeyHandler(
                 new KeyBindings().add({
                     command: "lazy typer",
@@ -260,7 +285,7 @@ describe("KeyHandler", () => {
             // keys: "Control+b Meta+e Meta+d",
             const sequence: DetailedKey[] = [
                 { key: "Control", modifiers: [] },
-                { key: "a", modifiers: ["Control"] },
+                { key: "a", modifiers: ["Meta", "Control"] },
                 { key: "r", modifiers: ["Control"] },
             ];
             const results = sequence.map(k => kh.dispatchKey(k, [""]));

@@ -1,4 +1,4 @@
-import { isIntersection } from "./kitchen-sink";
+import { isIntersection, isSubset } from "./kitchen-sink";
 import {
     KeyBindings,
     KeyBindingBranch,
@@ -7,6 +7,9 @@ import {
     SimpleKey,
     DetailedKey,
     Modifier,
+    isModifier,
+    hasModifier,
+    getUnmodifiedKey,
 } from "./key-bindings";
 
 interface DispatchKeyMiss {
@@ -29,6 +32,19 @@ interface DispatchKeyMatch {
     match: KeyBinding;
 }
 
+interface DispatchKeyModifier {
+    type: "modifier";
+    sequence: Key[];
+    modes: string[];
+    modifier: Modifier;
+}
+
+type DispatchKeyResult =
+    | DispatchKeyMiss
+    | DispatchKeyPending
+    | DispatchKeyMatch
+    | DispatchKeyModifier;
+
 interface PendingCommand {
     command: string;
     args: any[];
@@ -41,11 +57,6 @@ interface ModeChangeResult {
     newModes: string[];
     sequence: Key[];
 }
-
-type DispatchKeyResult =
-    | DispatchKeyMiss
-    | DispatchKeyPending
-    | DispatchKeyMatch;
 
 export class KeyHandler {
     public static keyIsModified(key: Key): key is DetailedKey {
@@ -75,11 +86,18 @@ export class KeyHandler {
         this.currentModes = modes;
         const result = this.bindings.find(modes, this.keySequence);
         if (!result) {
-            if (KeyHandler.keyIsModified(key)) {
-                const unmodified = KeyHandler.getUnmodifiedKey(key);
-                this.storedModifiers.push(...key.modifiers);
+            if (isModifier(key)) {
                 this.keySequence.pop();
-                return this.dispatchKey(unmodified, modes);
+                return {
+                    type: "modifier",
+                    sequence: this.keySequence,
+                    modifier: key,
+                    modes,
+                };
+            } else if (hasModifier(key)) {
+                this.keySequence.pop();
+                this.storedModifiers.push(...key.modifiers);
+                return this.dispatchKey(getUnmodifiedKey(key), modes);
             }
 
             const missedSequence = this.clearSequence();
@@ -104,23 +122,21 @@ export class KeyHandler {
         const storedModifiers = this.storedModifiers;
         const capturedSequence = this.clearSequence();
         const binding = result.leaf.value;
-        const path = KeyBindings.determineInsertPath(binding);
-        for (const modifier of storedModifiers) {
-            const index = path.indexOf(modifier);
-            if (index === -1) {
-                const missedSequence = this.clearSequence();
+
+        if (storedModifiers.length) {
+            const path = KeyBindings.determineInsertPath(binding);
+            if (!isSubset(storedModifiers, path)) {
                 return {
                     type: "miss",
-                    sequence: missedSequence,
+                    sequence: capturedSequence,
                     modes,
                 };
             }
-            path[index] = "";
         }
 
         return {
             type: "match",
-            match: result.leaf.value,
+            match: binding,
             sequence: capturedSequence,
             modes,
         };
@@ -182,26 +198,26 @@ export class KeyHandler {
         branches: KeyBindingBranch[],
         sequence: Key[],
     ): PendingCommand[] {
-        return branches.reduce((list, branch) => {
-            const tree = branch.children;
-            tree.forEach(leaf => {
-                // TODO: we're walking down the tree only to have to
-                // walk back up using `getNodePath` – this could be
-                // improved if the tree iteration methods gave the
-                // full path as an argument.
-                const path = tree.getNodePath(leaf);
-                const command = leaf.value.command;
-                const args = leaf.value.args;
-                const remaining = path.slice(sequence.length);
+        return branches.reduce(
+            (list, branch) => {
+                const tree = branch.children;
+                tree.forEach(leaf => {
+                    const binding = leaf.value;
+                    const path = KeyBindings.determineInsertPath(binding);
+                    const command = binding.command;
+                    const args = binding.args;
+                    const remaining = path.slice(sequence.length);
 
-                list.push({
-                    remaining,
-                    command,
-                    args,
+                    list.push({
+                        remaining,
+                        command,
+                        args,
+                    });
                 });
-            });
 
-            return list;
-        }, [] as PendingCommand[]);
+                return list;
+            },
+            [] as PendingCommand[],
+        );
     }
 }

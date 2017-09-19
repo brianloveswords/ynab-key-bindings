@@ -161,14 +161,7 @@ describe("KeyBindings", () => {
                 modifiers: ["Meta"],
             };
 
-            const sequence = [
-                "Control",
-                "Alt",
-                deleteKey,
-                "s",
-                "Meta",
-                sevenKey,
-            ];
+            const sequence = [deleteKey, "s", sevenKey];
 
             const found = kb.find(["a-mode"], sequence);
 
